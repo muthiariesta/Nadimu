@@ -33,7 +33,7 @@ export default function Login() {
             alt="Logo"
             className="w-16 h-16 object-contain relative z-10"/>
           <span className="text-3xl font-extrabold tracking-widest text-[#7D0A0A]">
-            MASUK
+            DAFTAR
           </span>
         </div>
 
@@ -89,9 +89,9 @@ export default function Login() {
           </button>
 
           <div className="text-center text-sm text-[#7D0A0A] mt-1">
-            Belum Memiliki Akun?{" "}
-            <a href="/register" className="text-[#7D0A0A] font-bold cursor-pointer no-underline hover:underline">
-              DAFTAR
+            Sudah Memiliki Akun?{" "}
+            <a href="/Login" className="text-[#7D0A0A] font-bold cursor-pointer no-underline hover:underline">
+              MASUK
             </a>
           </div>
         </div>

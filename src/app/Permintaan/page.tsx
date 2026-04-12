@@ -30,14 +30,14 @@ export default function Permintaan() {
           className="absolute left-0 p-1 hover:opacity-70 transition-opacity">
           <ArrowLeft size={32} color="#7D0A0A" />
         </button>
-        <h1 className="text-xl font-extrabold tracking-widest text-[#7D0A0A]">
+        <h1 className="text-3xl font-extrabold tracking-[2px] text-[#7D0A0A]">
           PERMINTAAN
         </h1>
       </div>
 
-      <div className="flex gap-8 max-w-4xl mx-auto">
+      <div className="flex gap-[80px] max-w-4xl mx-auto">
 
-        <div className="w-72 flex-shrink-0 bg-[#F88E8E]/50 rounded-2xl p-6">
+        <div className="w-72 flex-1 bg-[#F88E8E]/50 rounded-2xl p-6">
           <h2 className="text-[#7D0A0A] font-bold text-base text-center mb-4 leading-snug">
             Panduan Permintaan<br />Kantong Darah
           </h2>
@@ -154,7 +154,7 @@ export default function Permintaan() {
 
           <button
             onClick={handleKirim}
-            className="w-full bg-[#7D0A0A] hover:bg-[#F88E8E] active:scale-95 transition-all duration-200 text-[#FCFAEE] font-extrabold tracking-widest rounded-2xl py-4 text-sm mt-1">
+            className="w-full bg-[#7D0A0A] hover:bg-[#F88E8E] active:scale-95 transition-all duration-200 text-[#FCFAEE] font-extrabold tracking-[2px] rounded-2xl py-2 text-xl mt-1">
             KIRIM
           </button>
 
