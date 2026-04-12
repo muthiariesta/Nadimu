@@ -33,11 +33,10 @@ export default function CardBerita({ judul, slug, isi, gambar_url, onClick }: Ca
 
       <div className="px-4">
         <div className="w-full aspect-[4/3] relative overflow-hidden rounded-xl bg-white/60 shadow-inner">
-          <Image
+          <img
             src={gambar_url || "/empty-img.png"}
             alt={judul}
-            fill
-            className="object-cover"
+            className="object-cover w-full h-full"
           />
         </div>
       </div>
