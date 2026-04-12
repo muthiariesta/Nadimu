@@ -24,7 +24,7 @@ export default function CardKegiatan({
 }: CardKegiatanProps) {
   return (
     <div
-      className="flex flex-col rounded-[2.5rem] overflow-hidden transition-all w-full max-w-[300px] border active:scale-[0.97]"
+      className="flex flex-col rounded-2xl overflow-hidden transition-all w-full max-w-[300px] border active:scale-[0.97]"
       style={{
         backgroundColor: "rgba(234, 123, 123, 0.30)",
         borderColor: "#F88E8E",
@@ -44,7 +44,7 @@ export default function CardKegiatan({
 
       <div className="flex items-center justify-between px-5 mt-4 mb-2 gap-20">
         <span
-          className="text-[10px] font-bold px-3 py-1 rounded-full truncate flex-1 text-center"
+          className="text-[10px] font-bold px-3 py-1 rounded-3xl truncate flex-1 text-center"
           style={{
             backgroundColor: "rgba(234, 123, 123, 0.50)",
             color: "#7D0A0A",

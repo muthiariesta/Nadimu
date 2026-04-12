@@ -79,7 +79,7 @@ export default function KegiatanPage() {
               nama_event={item.nama_event}
               tanggal={item.tanggal}
               lokasi={item.lokasi}
-              onDetail={() => router.push(`/kegiatan/${item.id}`)}
+              onDetail={() => router.push(`/Kegiatan/${item.id}`)}
             />
           ))}
         </div>
