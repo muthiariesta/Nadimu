@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, MapPin, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
+import MapHero from "@/components/Peta";
 
 const GOLONGAN = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -134,132 +135,73 @@ export default function PetaStokPage() {
 
   return (
     <div
-      className="min-h-screen py-8"
-      style={{
-        background: "radial-gradient(ellipse at top right, #F88E8E 0%, #FCFAEE 55%)",
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-      }}
+      className="min-h-screen py-8 bg-[radial-gradient(ellipse_at_top_right,_#F88E8E_0%,_#FCFAEE_55%)] font-[family-name:var(--font-plus-jakarta)]"
     >
-      <div className="flex items-center px-6 md:px-32 mb-4">
+      <div className="flex items-center px-8 mb-4">
         <button onClick={() => router.back()} className="text-[#7D0A0A]">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
+          <ArrowLeft size={32} strokeWidth={2.5} />
         </button>
-        <h1 className="flex-1 text-center text-xl font-black tracking-widest pr-6" style={{ color: "#7D0A0A" }}>
-          PETA STOK DARAH
-        </h1>
       </div>
 
-      <p className="text-center font-bold text-base mb-5 px-6 md:px-32" style={{ color: "#7D0A0A" }}>
+      <p className="text-center font-bold text-2xl mb-5 px-8 text-[#7D0A0A]">
         Pantau Ketersediaan Stok Darah Di Seluruh Indonesia
       </p>
 
-      {/* Peta iframe — responsif */}
-      <div className="px-6 md:px-32 mb-3">
-        <div
-          className="w-full rounded-3xl overflow-hidden"
-          style={{
-            position: "relative",
-            paddingBottom: "clamp(220px, 42%, 480px)",
-            height: 0,
-            border: "1.5px solid #E0C5BC",
-            boxShadow: "0 4px 24px rgba(125,10,10,0.08)",
-          }}
-        >
-          <iframe
-            src="/peta.html"
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              border: "none",
-            }}
-            title="Peta Stok Darah Indonesia"
-          />
-        </div>
-        <p className="text-right text-xs mt-2 italic" style={{ color: "#9A6060" }}>
-          *Data Stok Darah Diperbarui Secara Berkala
-        </p>
-      </div>
+      <MapHero />
 
-      {/* Persebaran Stok */}
-      <div className="px-6 md:px-32 mt-8">
-        <h2 className="text-center text-xl font-black tracking-widest mb-8" style={{ color: "#7D0A0A" }}>
+      <div className="px-8 mt-8">
+        <h2 className="text-center text-xl font-black mb-8 text-[#7D0A0A]">
           PERSEBARAN STOK DARAH
         </h2>
 
-        <div
-          className="rounded-3xl p-6 md:p-8"
-          style={{
-            backgroundColor: "rgba(234,123,123,0.12)",
-            border: "1.5px solid #E0C5BC",
-          }}
-        >
-          {/* Search */}
-          <div
-            className="flex items-center gap-3 px-5 py-3 rounded-full mb-5"
-            style={{ backgroundColor: "#FCFAEE", border: "1.5px solid #E0C5BC" }}
-          >
-            <Search size={16} color="#9A6060" />
+        <div className="rounded-3xl p-6 mx-10 md:mx-20 md:p-8 bg-[#EA7B7B]/10 border-[1.5px] border-[#E0C5BC]">
+          
+          <div className="flex items-center gap-3 px-5 py-3 rounded-full mb-5 bg-[#FCFAEE] border-[1.5px] border-[#E0C5BC]">
+            <Search size={16} className="text-[#9A6060]" />
             <input
               type="text"
               placeholder="Cari lokasi ..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-sm"
-              style={{ color: "#7D0A0A" }}
+              className="flex-1 bg-transparent outline-none text-sm text-[#7D0A0A]"
             />
           </div>
 
-          {/* Filter Golongan */}
           <div className="flex gap-2 flex-wrap mb-3">
             {["Semua Gol.", ...GOLONGAN].map((g) => (
               <button
                 key={g}
                 onClick={() => setFilterGol(g)}
-                className="px-4 py-2 rounded-full text-xs font-bold transition-all"
-                style={{
-                  backgroundColor: filterGol === g ? "#7D0A0A" : "#FCFAEE",
-                  color: filterGol === g ? "#FCFAEE" : "#7D0A0A",
-                  border: "1.5px solid #E0C5BC",
-                }}
+                className={`px-4 py-2 rounded-full text-xs font-bold transition-all border-[1.5px] border-[#E0C5BC]
+                  ${filterGol === g ? "bg-[#7D0A0A] text-[#FCFAEE]" : "bg-[#FCFAEE] text-[#7D0A0A]"}`}
               >
                 {g}
               </button>
             ))}
           </div>
 
-          {/* Filter Status */}
           <div className="flex gap-2 flex-wrap mb-6">
             {[
-              { key: "semua", label: "Semua Status", activeBg: "#1D9E75", activeText: "#fff" },
-              { key: "kritis", label: "Kritis", activeBg: "#FECACA", activeText: "#991B1B" },
-              { key: "waspada", label: "Waspada", activeBg: "#FEF08A", activeText: "#854D0E" },
-              { key: "aman", label: "Aman", activeBg: "#BBF7D0", activeText: "#166534" },
+              { key: "semua", label: "Semua Status", activeBg: "bg-[#1CB49B]/80", activeText: "text-white" },
+              { key: "kritis", label: "Kritis", activeBg: "bg-[#EA7B7B]/50", activeText: "text-[#7D0A0A]" },
+              { key: "waspada", label: "Waspada", activeBg: "bg-[#FEF08A]", activeText: "text-[#7D0A0A]" },
+              { key: "aman", label: "Aman", activeBg: "bg-[#7FB73C]/50", activeText: "text-[#7D0A0A]" },
             ].map((s) => (
               <button
                 key={s.key}
                 onClick={() => setFilterStatus(s.key)}
-                className="px-5 py-2 rounded-full text-xs font-bold transition-all"
-                style={{
-                  backgroundColor: filterStatus === s.key ? s.activeBg : "#FCFAEE",
-                  color: filterStatus === s.key ? s.activeText : "#9A6060",
-                  border: "1.5px solid #E0C5BC",
-                }}
+                className={`px-5 py-2 rounded-full text-xs font-bold transition-all border-[1.5px] border-[#E0C5BC]
+                  ${filterStatus === s.key ? `${s.activeBg} ${s.activeText}` : "bg-[#FCFAEE] text-[#9A6060]"}`}
               >
                 {s.label}
               </button>
             ))}
           </div>
 
-          <p className="text-sm font-semibold mb-4" style={{ color: "#7D0A0A" }}>
+          <p className="text-sm font-semibold mb-4 text-[#7D0A0A]">
             {filtered.length} lokasi
           </p>
 
-          {/* List wilayah */}
           <div className="flex flex-col gap-1">
             {filtered.map((w) => {
               const isOpen = openWilayah === w.wilayah;
@@ -273,27 +215,26 @@ export default function PetaStokPage() {
               return (
                 <div key={w.wilayah}>
                   <button
-                    className="w-full flex items-center justify-between py-4 border-b"
-                    style={{ borderColor: "#E0C5BC" }}
+                    className="w-full flex items-center justify-between py-4 border-b border-[#E0C5BC]"
                     onClick={() => setOpenWilayah(isOpen ? null : w.wilayah)}
                   >
                     <div className="flex items-center gap-3">
-                      <MapPin size={18} color="#7D0A0A" />
+                      <MapPin size={18} className="text-[#7D0A0A]" />
                       <div className="text-left">
-                        <p className="font-black text-sm" style={{ color: "#7D0A0A" }}>{w.wilayah}</p>
-                        <p className="text-xs" style={{ color: "#9A6060" }}>
+                        <p className="font-black text-sm text-[#7D0A0A]">{w.wilayah}</p>
+                        <p className="text-xs text-[#9A6060]">
                           {w.units.length} unit &nbsp;|&nbsp; {totalAda} kantong
                         </p>
                       </div>
                     </div>
-                    {isOpen ? <ChevronUp size={18} color="#7D0A0A" /> : <ChevronDown size={18} color="#7D0A0A" />}
+                    {isOpen ? <ChevronUp size={18} className="text-[#7D0A0A]" /> : <ChevronDown size={18} className="text-[#7D0A0A]" />}
                   </button>
 
                   {isOpen && (
                     <div className="py-3 flex flex-col gap-4">
                       {Object.entries(byKota).map(([kota, units]) => (
                         <div key={kota}>
-                          <p className="text-xs font-black tracking-widest mb-3" style={{ color: "#9A6060" }}>
+                          <p className="text-[10px] font-black tracking-widest mb-3 text-[#9A6060]">
                             {kota}
                           </p>
                           {units.map((u, i) => {
@@ -303,37 +244,34 @@ export default function PetaStokPage() {
                             return (
                               <div
                                 key={i}
-                                className="flex flex-wrap md:flex-nowrap items-center gap-3 py-3 border-b"
-                                style={{ borderColor: "#E0C5BC" }}
+                                className="flex items-center justify-between w-full py-3 border-b border-[#E0C5BC]"
                               >
-                                <div style={{ minWidth: "140px" }}>
-                                  <p className="font-bold text-sm" style={{ color: "#7D0A0A" }}>{u.nama}</p>
-                                  <p className="text-xs" style={{ color: "#9A6060" }}>Gol. {u.gol}</p>
+                                <div className="w-[140px] shrink-0">
+                                  <p className="font-bold text-sm text-[#7D0A0A]">{u.nama}</p>
+                                  <p className="text-xs text-[#9A6060]">Gol. {u.gol}</p>
                                 </div>
 
-                                <div
-                                  className="flex-1 h-2 rounded-full overflow-hidden"
-                                  style={{ backgroundColor: "#E0C5BC", minWidth: "80px" }}
-                                >
+                                <div className="w-[80px] h-2.5 rounded-full overflow-hidden bg-[#EA7B7B]/20 shrink-0">
                                   <div
                                     className="h-full rounded-full transition-all duration-500"
                                     style={{ width: `${pct}%`, backgroundColor: col.dot }}
                                   />
                                 </div>
 
-                                <p
-                                  className="text-sm font-bold whitespace-nowrap"
-                                  style={{ color: "#7D0A0A", minWidth: "100px", textAlign: "right" }}
-                                >
-                                  {u.ada}/{u.kap} kantong
-                                </p>
+                                <div className="w-[100px] shrink-0">
+                                  <p className="text-sm font-bold text-[#7D0A0A] text-center">
+                                    {u.ada}/{u.kap} kantong
+                                  </p>
+                                </div>
 
-                                <span
-                                  className="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap"
-                                  style={{ backgroundColor: col.bg, color: col.text, minWidth: "70px", textAlign: "center" }}
-                                >
-                                  {getStatusLabel(st)}
-                                </span>
+                                <div className="w-[80px] shrink-0 flex justify-end">
+                                  <span
+                                    className="px-4 py-1.5 rounded-full text-[10px] font-bold min-w-[75px] text-center"
+                                    style={{ backgroundColor: col.bg, color: col.text }}
+                                  >
+                                    {getStatusLabel(st)}
+                                  </span>
+                                </div>
                               </div>
                             );
                           })}
