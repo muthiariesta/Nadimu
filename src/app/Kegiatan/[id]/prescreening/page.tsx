@@ -3,6 +3,7 @@
 import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { ArrowLeft, Check } from "lucide-react";
 
 const CHECKLIST_ITEMS = [
   "Usia 17–60 Tahun",
@@ -54,76 +55,65 @@ export default function PreScreeningPage({ params }: { params: Promise<{ id: str
   };
 
   return (
-    <div className="min-h-screen px-8 py-6" style={{ background: "radial-gradient(ellipse at top right, #F88E8E 0%, #FCFAEE 50%)" }}>
-      <div className="flex items-center mb-6">
-        <button onClick={() => router.back()} className="text-[#7D0A0A]">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
+    <div className="min-h-screen px-8 py-8 bg-[radial-gradient(ellipse_at_top_right,_#F88E8E_0%,_#FCFAEE_50%)] font-[family-name:var(--font-plus-jakarta)] antialiased">
+      <div className="relative flex items-center justify-center mb-6">
+        <button 
+          onClick={() => router.back()} 
+          className="absolute left-0 p-2 text-[#7D0A0A] hover:bg-[#F88E8E] rounded-full transition-all"
+        >
+          <ArrowLeft size={32} strokeWidth={3} />
         </button>
-        <h1 className="flex-1 text-center text-xl font-black tracking-widest pr-6" style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <h1 className="text-2xl font-black text-[#7D0A0A] uppercase">
           PENGECEKAN KONDISI
         </h1>
       </div>
 
-      <p className="text-center text-sm mb-6" style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <p className="text-center text-sm mb-8 text-[#7D0A0A] font-medium">
         Pastikan Anda Memenuhi Syarat Berikut Sebelum Melakukan Donor Darah
       </p>
 
-      <div className="max-w-2xl mx-auto mb-6">
-        <div className="relative w-full h-8 rounded-full overflow-hidden" style={{ backgroundColor: "#E0C5BC" }}>
-          <div className="h-full rounded-full transition-all duration-300" style={{ width: `${persen}%`, backgroundColor: "#7D0A0A" }} />
-          <span
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold"
-            style={{ color: persen > 85 ? "#FCFAEE" : "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-          >
+      <div className="max-w-2xl mx-auto mb-10">
+        <div className="relative w-full h-9 rounded-full bg-[#F88E8E]/30 p-1.5 border border-[#F88E8E]/20">
+          <div 
+            className="h-full rounded-full bg-[#7D0A0A] transition-all duration-500 ease-out"
+            style={{ width: `${persen}%` }}
+          />
+          <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-black text-[#7D0A0A]">
             {persen}%
           </span>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto flex flex-col gap-4 mb-10">
+      <div className="max-w-2xl mx-auto flex flex-col gap-2.5 mb-10">
         {CHECKLIST_ITEMS.map((item, i) => (
-          <label key={i} className="flex items-center gap-4 cursor-pointer" onClick={() => toggle(i)}>
+          <div 
+            key={i} 
+            className="flex items-center gap-4 cursor-pointer group py-0.5" 
+            onClick={() => toggle(i)}
+          >
             <div
-              className="shrink-0 w-8 h-8 rounded-lg transition-all duration-200 flex items-center justify-center"
-              style={{
-                backgroundColor: checked[i] ? "#7D0A0A" : "rgba(234,123,123,0.35)",
-                border: checked[i] ? "none" : "1.5px solid #E0C5BC",
-              }}
+              className="shrink-0 w-7 h-7 rounded-full bg-[#EA7B7B]/20 border border-[#7D0A0A]/10 transition-all duration-200 flex items-center justify-center"
             >
               {checked[i] && (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FCFAEE" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
+                <Check size={18} strokeWidth={4} className="text-[#7D0A0A]" />
               )}
             </div>
-            <span
-              className="text-sm"
-              style={{
-                color: checked[i] ? "#7D0A0A" : "#5a2a2a",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontWeight: checked[i] ? "600" : "400",
-              }}
-            >
+            
+            <span className={`text-sm leading-tight transition-all duration-200 ${checked[i] ? 'text-[#7D0A0A] font-bold' : 'text-[#5a2a2a]'}`}>
               {item}
             </span>
-          </label>
+          </div>
         ))}
       </div>
 
-      <div className="flex justify-center pb-8">
+      <div className="flex justify-center pb-10">
         <button
           onClick={handleKonfirmasi}
           disabled={!semuaChecked || loading}
-          className="px-16 py-4 rounded-full font-black tracking-widest text-sm transition-all duration-200 active:scale-95"
-          style={{
-            backgroundColor: semuaChecked ? "#7D0A0A" : "rgba(234,123,123,0.4)",
-            color: semuaChecked ? "#FCFAEE" : "#7D0A0A",
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            letterSpacing: "0.2em",
-            cursor: semuaChecked ? "pointer" : "not-allowed",
-          }}
+          className={`px-16 py-4 rounded-full font-black text-sm transition-all duration-200 active:scale-95
+            ${semuaChecked 
+              ? 'bg-[#7D0A0A] text-[#FCFAEE] hover:bg-[#F88E8E] cursor-pointer shadow-lg' 
+              : 'bg-[#EA7B7B]/40 text-[#7D0A0A]/50 cursor-not-allowed'}`}
         >
           {loading ? "MEMPROSES..." : "KONFIRMASI"}
         </button>

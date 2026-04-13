@@ -3,8 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import Image from "next/image";
-import { CalendarDays, MapPin, Phone, ExternalLink } from "lucide-react";
+import { CalendarDays, MapPin, Phone, ExternalLink, ArrowLeft } from "lucide-react";
 
 interface KegiatanDetail {
   id: string;
@@ -50,7 +49,6 @@ function StaticMapCard({
   lokasi: string;
 }) {
   const coords = extractCoordsFromEmbed(embedUrl);
-
   const mapsLink =
     linkMaps ||
     (coords
@@ -58,17 +56,11 @@ function StaticMapCard({
       : `https://www.google.com/maps/search/${encodeURIComponent(lokasi || namaInstitusi)}`);
 
   return (
-    <div
-      className="w-[280px] rounded-3xl overflow-hidden flex-shrink-0 flex flex-col"
-      style={{ border: "1.5px solid #7D0A0A", background: "#F7D4CC" }}
-    >
-      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <MapPin size={14} color="#7D0A0A" />
-          <span
-            className="text-xs font-bold truncate max-w-[180px]"
-            style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-          >
+    <div className="w-full md:w-[280px] rounded-3xl overflow-hidden flex-shrink-0 flex flex-col border border-[#7D0A0A] bg-[#F7D4CC] font-[family-name:var(--font-plus-jakarta)]">
+      <div className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-[#7D0A0A]">
+          <MapPin size={14} />
+          <span className="text-xs font-bold truncate max-w-[180px]">
             {namaInstitusi || lokasi}
           </span>
         </div>
@@ -78,43 +70,29 @@ function StaticMapCard({
         href={mapsLink}
         target="_blank"
         rel="noopener noreferrer"
-        className="group relative block flex-1 overflow-hidden"
-        style={{ height: 160 }}
+        className="group relative block h-40 overflow-hidden"
       >
         {embedUrl ? (
           <iframe
             src={embedUrl}
             width="100%"
             height="160"
-            style={{ border: 0, pointerEvents: "none", display: "block" }}
+            className="border-0 pointer-events-none block"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             title="Peta lokasi"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-[#F7D4CC]">
-            <MapPin size={32} color="#7D0A0A" className="opacity-40" />
-            <span
-              className="text-xs text-center px-4 opacity-50"
-              style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-            >
+            <MapPin size={32} className="text-[#7D0A0A] opacity-40" />
+            <span className="text-xs text-center px-4 text-[#7D0A0A] opacity-50">
               {lokasi || namaInstitusi}
             </span>
           </div>
         )}
-
         <div className="absolute inset-0 bg-transparent group-hover:bg-black/10 transition-colors duration-200" />
-
-        <div
-          className="absolute bottom-2 right-2 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0"
-          style={{
-            background: "#7D0A0A",
-            color: "#FCFAEE",
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-          }}
-        >
-          <ExternalLink size={9} />
-          Buka Maps
+        <div className="absolute bottom-2 right-2 flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 bg-[#7D0A0A] text-[#FCFAEE]">
+          <ExternalLink size={9} /> Buka Maps
         </div>
       </a>
     </div>
@@ -167,87 +145,66 @@ export default function DetailKegiatanPage({ params }: { params: Promise<{ id: s
   const hasMapData = kegiatan.maps_embed || kegiatan.link_maps || kegiatan.lokasi;
 
   return (
-    <div
-      className="min-h-screen px-8 py-6"
-      style={{ background: "radial-gradient(ellipse at top right, #F88E8E 0%, #FCFAEE 50%)" }}
-    >
-      <div className="flex items-center mb-6">
-        <button onClick={() => router.back()} className="text-[#7D0A0A] ml-8">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
-        </button>
-        <h1
-          className="flex-1 text-center text-xl font-black tracking-widest pr-6"
-          style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+    <div className="min-h-screen p-8 bg-[radial-gradient(ellipse_at_top_right,_#F88E8E_0%,_#FCFAEE_50%)] font-[family-name:var(--font-plus-jakarta)] antialiased">
+      <div className="relative flex items-center justify-center mb-8">
+        <button 
+          onClick={() => router.back()} 
+          className="absolute left-0 p-2 text-[#7D0A0A] hover:opacity-60 transition-all rounded-full"
         >
-          {kegiatan.nama_event.toUpperCase()}
+          <ArrowLeft size={32} strokeWidth={3} />
+        </button>
+        
+        <h1 className="text-2xl font-black text-[#7D0A0A] text-center uppercase">
+          {kegiatan.nama_event}
         </h1>
       </div>
 
-      <div className="flex justify-center mb-6">
-        <div className="relative w-[380px] h-[220px] rounded-2xl overflow-hidden">
-          <Image
+      <div className="flex justify-center mb-8">
+        <div className="relative w-full max-w-[400px] aspect-video rounded-2xl overflow-hidden shadow-xl">
+          <img
             src={kegiatan.gambar_url || "/empty-img.png"}
             alt={kegiatan.nama_event}
-            fill
-            className="object-cover"
+            className="object-cover w-full h-full"
           />
         </div>
       </div>
 
-      <div className="flex justify-center items-center gap-2 mb-4">
-        <CalendarDays size={18} color="#7D0A0A" />
-        <p
-          className="text-sm font-semibold"
-          style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-        >
-          {formatTanggal(kegiatan.tanggal)} &nbsp;|&nbsp; {formatJam(kegiatan.jam_mulai)} - {formatJam(kegiatan.jam_selesai)}
+      <div className="flex justify-center items-center gap-2 mb-6 text-[#7D0A0A]">
+        <CalendarDays size={20} strokeWidth={2.5} />
+        <p className="text-base font-bold">
+          {formatTanggal(kegiatan.tanggal)}  |  {formatJam(kegiatan.jam_mulai)} - {formatJam(kegiatan.jam_selesai)}
         </p>
       </div>
 
-      <p
-        className="text-center text-sm leading-relaxed max-w-2xl mx-auto mb-8"
-        style={{ color: "#5a2a2a", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-      >
+      <p className="text-center text-sm leading-relaxed max-w-2xl mx-auto mb-10 text-[#5a2a2a] font-medium">
         {kegiatan.deskripsi}
       </p>
 
-      <div className="flex gap-6 max-w-3xl mx-auto">
-        <div
-          className="flex-1 rounded-3xl p-5 flex flex-col gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
-          style={{ border: "1.5px solid #7D0A0A", background: "#F7D4CC" }}
-        >
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-bold" style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Kuota Peserta
-            </span>
-            <span className="text-sm font-black" style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              {pesertaTerdaftar}/{kegiatan.kuota}
-            </span>
+      <div className="flex flex-col md:flex-row gap-8 max-w-4xl mx-auto justify-center items-stretch">
+        <div className="flex-1 rounded-3xl p-8 flex flex-col gap-4 shadow-xl border border-[#7D0A0A] bg-[#F7D4CC]">
+          <div className="flex justify-between items-center text-[#7D0A0A]">
+            <span className="text-sm font-bold">Kuota Peserta</span>
+            <span className="text-sm font-black">{pesertaTerdaftar}/{kegiatan.kuota}</span>
           </div>
-          <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: "#E0C5BC" }}>
+          
+          <div className="w-full h-3 rounded-full bg-[#E0C5BC] overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${progressPersen}%`, backgroundColor: "#7D0A0A" }}
+              className="h-full rounded-full transition-all duration-500 bg-[#7D0A0A]"
+              style={{ width: `${progressPersen}%` }}
             />
           </div>
-          <p className="text-xs" style={{ color: "#5a2a2a", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          <p className="text-xs font-bold text-[#5a2a2a]">
             {slotTersedia} slot tersedia
           </p>
 
-          <div className="flex gap-3 mt-1">
+          <div className="flex flex-wrap gap-4 mt-4">
             <button
               onClick={() => { if (!sudahDaftar) router.push(`/Kegiatan/${id}/prescreening`); }}
               disabled={slotTersedia === 0}
-              className="flex-1 py-3 rounded-full font-black text-xs tracking-widest transition-all hover:opacity-90 active:scale-95 disabled:opacity-40"
-              style={{
-                backgroundColor: sudahDaftar ? "#E0C5BC" : "#7D0A0A",
-                color: sudahDaftar ? "#7D0A0A" : "#FCFAEE",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                letterSpacing: "0.15em",
-                cursor: sudahDaftar ? "default" : "pointer",
-              }}
+              className={`flex-1 min-w-[120px] py-4 rounded-full font-black text-xs tracking-widest transition-all active:scale-95 disabled:opacity-40 
+                ${sudahDaftar 
+                  ? 'bg-[#E0C5BC] text-[#7D0A0A] cursor-default' 
+                  : 'bg-[#7D0A0A] text-[#FCFAEE] hover:bg-[#F88E8E]'}`}
             >
               {sudahDaftar ? "TERDAFTAR" : "DAFTAR"}
             </button>
@@ -257,13 +214,7 @@ export default function DetailKegiatanPage({ params }: { params: Promise<{ id: s
                 href={`https://wa.me/${kegiatan.nomor_wa.replace(/\D/g, "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 py-3 rounded-full font-black text-xs tracking-widest flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-95"
-                style={{
-                  border: "1.5px solid #7D0A0A",
-                  color: "#7D0A0A",
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  letterSpacing: "0.1em",
-                }}
+                className="flex-1 min-w-[120px] py-4 rounded-full font-black text-xs tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 border border-[#7D0A0A] text-[#7D0A0A] hover:bg-[#F88E8E] hover:text-[#FCFAEE]"
               >
                 <Phone size={14} /> NARAHUBUNG
               </a>
