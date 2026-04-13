@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Users, Megaphone } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, Send, Users, Megaphone, User } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface Pesan {
   id: string;
@@ -11,25 +12,11 @@ interface Pesan {
   pengirim_id: string;
   nama: string;
 }
-
-const DUMMY_MESSAGES: Pesan[] = [
-  {
-    id: "1",
-    isi: "Update: Donor O- Untuk RS Harapan Kita Sudah Terpenuhi! Terima Kasih Banyak Untuk 6 Orang Yang Datang Hari Ini. Kalian Pahlawan!",
-    dikirim_pada: "2026-03-04T19:45:00",
-    pengirim_id: "user-1",
-    nama: "Roojie Kham Bung",
-  },
-  {
-    id: "2",
-    isi: "Jangan Lupa Bagi Pendaftar Event Hari Donor Darah Nasional Untuk:\n\n• Istirahat Yang Cukup\n• Datang Pada Waktu Yang Tertera\n\nAkan Ada Undian Menarik Yang Dibagikan Oleh Petugas Saat Registrasi Ulang",
-    dikirim_pada: "2026-03-10T23:59:00",
-    pengirim_id: "user-2",
-    nama: "John Forum",
-  },
-];
-
-const CURRENT_USER_ID = "me";
+interface Komunitas {
+  id: string;
+  nama: string;
+  jumlah_anggota: number;
+}
 
 function groupByDate(messages: Pesan[]) {
   const groups: { date: string; messages: Pesan[] }[] = [];
@@ -60,8 +47,121 @@ function formatTime(iso: string) {
 
 export default function KomunitasChatPage() {
   const router = useRouter();
+  const param = useParams();
+  const komunitas_id = param.id as string;
   const bottomRef = useRef<HTMLDivElement>(null);
-  const groups = groupByDate(DUMMY_MESSAGES);
+  const [pesan, setPesan] = useState<Pesan[]>([]);
+  const [komunitas, setKomunitas] = useState<Komunitas | null>(null);
+  const [inputPesan, setInputPesan] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id ?? null);
+
+      const { data: komunitasData } = await supabase
+        .from("komunitas")
+        .select("id, nama, jumlah_anggota")
+        .eq("id", komunitas_id)
+        .single();
+      setKomunitas(komunitasData);
+
+      const { data: pesanData, error } = await supabase
+        .from("pesan_komunitas")
+        .select("id, isi, dikirim_pada, pengirim_id")
+        .eq("komunitas_id", komunitas_id)
+        .order("dikirim_pada", { ascending: true });
+
+      if (error) {
+        console.error("Error fetch pesan:", error);
+      } else {
+        const formatted = (pesanData ?? []).map((p: any) => ({
+          id: p.id,
+          isi: p.isi,
+          dikirim_pada: p.dikirim_pada,
+          pengirim_id: p.pengirim_id,
+          nama: p.profil?.nama ?? "Anonim",
+        }));
+        setPesan((formatted));
+      }
+
+      setLoading(false);
+    };
+
+    init();
+  }, [komunitas_id]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`pesan_komunitas:${komunitas_id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "pesan_komunitas",
+          filter: `komunitas_id=eq.${komunitas_id}`,
+        },
+        async (payload) => {
+          const { data: profil } = await supabase
+            .from("profil")
+            .select("nama")
+            .eq("id", payload.new.pengirim_id)
+            .single();
+          const pesanBaru: Pesan = {
+            id: payload.new.id,
+            isi: payload.new.isi,
+            dikirim_pada: payload.new.dikirim_pada ?? new Date().toISOString(),
+            pengirim_id: payload.new.pengirim_id,
+            nama: profil?.nama ?? "Anonim",
+          };
+
+          setPesan((prev) => [...prev, pesanBaru]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [komunitas_id]);
+
+  const handleKirim = async () => {
+    if (!inputPesan.trim() || !userId) return;
+    const { data, error } = await supabase
+      .from("pesan_komunitas")
+      .insert({
+        komunitas_id,
+        pengirim_id: userId,
+        isi: inputPesan,
+      })
+      .select();
+      console.log("hasil insert:", data, error);
+      
+    if (error) {
+      console.error("Gagal kirim:", error);
+      return;
+    }
+
+    setInputPesan("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleKirim();
+    }
+  };
+
+  const groups = groupByDate(pesan)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [pesan]);
+
+
 
   return (
     <div
@@ -84,18 +184,18 @@ export default function KomunitasChatPage() {
         </button>
 
         <div className="w-12 h-12 rounded-full bg-[#7D0A0A] flex items-center justify-center flex-shrink-0 shadow-sm">
-          <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-          </svg>
+          <User size={32}/>
         </div>
 
         <div className="flex-1 min-w-0">
           <p className="font-extrabold text-[#7D0A0A] text-base leading-tight truncate">
-            Pendonor Gen Z Jember
+            { komunitas?.nama }
           </p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <Users size={12} className="text-[#7D0A0A]/60" />
-            <span className="text-xs font-semibold text-[#7D0A0A]/60">37 Anggota</span>
+            <span className="text-xs font-semibold text-[#7D0A0A]/60">
+              {Number(komunitas?.jumlah_anggota ?? 0).toLocaleString("id-ID")} Anggota
+            </span>
           </div>
         </div>
 
@@ -108,12 +208,12 @@ export default function KomunitasChatPage() {
           <div key={group.date}>
             <div className="flex justify-center my-6">
               <span className="px-6 py-2 rounded-full text-[10px] font-black tracking-widest text-white bg-[#7D0A0A]">
-                {group.date.toUpperCase()}
+                {group.date}
               </span>
             </div>
 
             {group.messages.map((msg, i) => {
-              const isMe = msg.pengirim_id === CURRENT_USER_ID;
+              const isMe = msg.pengirim_id === userId;
               const showSender =
                 !isMe &&
                 (i === 0 || group.messages[i - 1].pengirim_id !== msg.pengirim_id);
@@ -164,15 +264,21 @@ export default function KomunitasChatPage() {
         >
           <input
             type="text"
+            value={inputPesan}
             placeholder="Kirim Pesan..."
             className="flex-1 bg-transparent outline-none text-sm text-[#7D0A0A] placeholder:text-[#7D0A0A]/40 font-medium py-2"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            onChange={(e) => setInputPesan(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter"){
+                e.preventDefault();
+                handleKirim();
+              }
+            }
+          }
           />
-          <button
-            className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center active:scale-90 transition-all"
-            style={{ backgroundColor: "#7D0A0A" }}
-          >
-            <Send size={14} className="text-white translate-x-0.5" />
+          <button onClick={handleKirim}>
+            <Send size={24}className="text-[#7D0A0A] translate-x-0.5"/>
           </button>
         </div>
       </div>
