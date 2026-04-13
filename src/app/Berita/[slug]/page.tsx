@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import Image from "next/image";
 
 interface Berita {
   judul: string;
@@ -37,50 +37,31 @@ export default function DetailBeritaPage() {
   if (loading) return null;
 
   return (
-    <div
-      className="min-h-screen px-8 py-16" 
-      style={{
-        background: "radial-gradient(circle, #FCFAEE 62%, #F88E8E 100%)",
-      }}
-    >
-
-      <div className="max-w-5xl mx-auto flex items-start mb-8">
+    <div className="min-h-screen bg-[radial-gradient(circle,_#FCFAEE_72%,_#F88E8E_120%)] px-8 py-8 font-[family-name:var(--font-plus-jakarta)]">
+      <div className="relative flex items-center justify-center mb-8">
         <button
           onClick={() => router.back()}
-          className="mt-1 text-[#7D0A0A] hover:opacity-60 transition-all"
+          className="absolute left-0 p-1 text-[#7D0A0A] hover:opacity-60 transition-all"
         >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
+          <ArrowLeft size={32} strokeWidth={3} />
         </button>
-        
-        <h1
-          className="flex-1 text-center text-xl md:text-2xl font-black uppercase tracking-widest px-4"
-          style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-        >
+
+        <h1 className="text-2xl font-black uppercase tracking-normal text-[#7D0A0A] text-center max-w-[80%]">
           {berita?.judul}
         </h1>
       </div>
 
       <div className="max-w-5xl mx-auto flex flex-col items-center">
-        <div className="w-full max-w-[500px] aspect-[16/9] relative rounded-2xl overflow-hidden mb-8 shadow-md">
-          <Image
+        <div className="w-full max-w-[500px] aspect-[16/9] relative rounded-2xl border-[#7D0A0A] border-1 overflow-hidden mb-10 mt-2 shadow-xd bg-white/60">
+          <img
             src={berita?.gambar_url || "/empty-img.png"}
             alt={berita?.judul || "Berita"}
-            fill
-            className="object-cover"
+            className="object-cover w-full h-full"
           />
         </div>
 
         <div className="w-full">
-          <p
-            className="text-sm md:text-[15px] leading-relaxed text-justify whitespace-pre-line"
-            style={{ 
-              color: "#7D0A0A", 
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontWeight: "500" 
-            }}
-          >
+          <p className="text-sm leading-relaxed text-justify whitespace-pre-line text-[#7D0A0A] font-medium">
             {berita?.isi}
           </p>
         </div>
