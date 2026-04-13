@@ -90,16 +90,14 @@ export default function CardKegiatan({
       <div className="px-5 pb-6 mt-2">
         <button
           onClick={onDetail}
-          className="w-full py-3 rounded-full font-black tracking-widest text-[11px] transition-all hover:brightness-110 active:scale-95 shadow-md"
+          className="w-full py-3 rounded-full font-black tracking-widest text-[11px] transition-all bg-[#7D0A0A] text-[#FCFAEE] hover:bg-[#F88E8E] active:scale-95 shadow-md"
           style={{
-            backgroundColor: "#7D0A0A", 
-            color: "#FCFAEE",
             fontFamily: "'Plus Jakarta Sans', sans-serif",
             letterSpacing: "0.2em",
           }}
-        >
-          DETAIL
-        </button>
+>
+            DETAIL
+          </button>
       </div>
     </div>
   );

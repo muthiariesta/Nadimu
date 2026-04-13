@@ -2,12 +2,13 @@
 import { supabase } from "@/lib/supabase";
 import CardKegiatan from "@/components/CardKegiatan";
 import CardBerita from "@/components/CardBerita";
+import Image from "next/image";
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface NewsItem {
   judul: string;
@@ -57,6 +58,15 @@ const faqs = [
   },
 ];
 
+const MapPetaStok = dynamic(() => import("@/components/MapPetaStok"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center">
+      <p className="text-[#7B1818] opacity-50 text-sm">Memuat peta...</p>
+    </div>
+  ),
+});
+
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
 function Navbar() {
@@ -73,11 +83,7 @@ function Navbar() {
     <nav className="sticky top-0 z-50 px-8 py-4 flex items-center justify-between bg-[#F88E90]/60 backdrop-blur-md shadow-sm">
       {/* Logo */}
       <div className="flex items-center gap-2 cursor-pointer" onClick={() => scrollTo("beranda")}>
-        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-          <path d="M18 4C18 4 8 14 8 21.5C8 27.299 12.701 32 18 32C23.299 32 28 27.299 28 21.5C28 14 18 4Z" fill="#8B1A1A" />
-          <path d="M18 10C18 10 12 17 12 21.5C12 24.538 14.686 27 18 27C21.314 27 24 24.538 24 21.5C24 17 18 10Z" fill="#F4A0A0" opacity="0.6" />
-          <path d="M15 22C15 22 16 19 18 18C20 17 21.5 19 21.5 21C21.5 23 20 24.5 18 24.5" stroke="#8B1A1A" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
+        <Image src="/asset/logo.png" alt="Nadimu Logo" width={30} height={36} />
         <span className="text-[#8B1A1A] font-bold text-xl tracking-wide">Nadimu</span>
       </div>
 
@@ -167,8 +173,8 @@ function Navbar() {
 
       {/* Masuk button */}
       <Link
-        href="/login"
-        className="hidden md:block bg-[#8B1A1A] text-white font-bold tracking-widest px-8 py-3 rounded-full hover:bg-[#6B1010] transition-colors"
+        href="/Login"
+        className="hidden md:block bg-[#8B1A1A] text-white font-bold tracking-widest px-8 py-3 rounded-full hover:bg-[#F88E8E] transition-colors"
       >
         MASUK
       </Link>
@@ -221,7 +227,7 @@ function Navbar() {
             </button>
           </div>
           <Link
-            href="/login"
+            href="/Login"
             className="bg-[#8B1A1A] text-white font-bold tracking-widest px-8 py-3 rounded-full mt-2 text-center"
           >
             MASUK
@@ -294,7 +300,7 @@ function Hero() {
           </p>
           <Link
             href="/Login"
-            className="inline-block bg-[#8B1A1A] text-white font-bold tracking-widest px-10 py-4 rounded-full hover:bg-[#6B1010] hover:scale-105 transition-all duration-300 shadow-lg shadow-[#8B1A1A]/30"
+            className="inline-block bg-[#8B1A1A] text-white font-bold tracking-widest px-10 py-4 rounded-full hover:bg-[#F88E8E] transition-all duration-300 shadow-lg shadow-[#8B1A1A]/30"
           >
             DONOR SEKARANG
           </Link>
@@ -302,7 +308,7 @@ function Hero() {
 
         <div
           ref={countersRef}
-          className="mt-10 mx-auto bg-[#F4BABA]/50 backdrop-blur-sm rounded-3xl px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-0 divide-x divide-[#8B1A1A]/20"
+          className="mt-10 mx-auto bg-[#F4BABA]/50 backdrop-blur-sm rounded-3xl px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-0 divide-x-2 divide-[#8B1A1A]/20"
           style={{ maxWidth: 900 }}
         >
           {stats.map((stat) => (
@@ -346,9 +352,9 @@ function FindDonor() {
         </p>
         <Link
           href="/Login"
-          className="inline-block bg-[#8B1A1A] text-white font-bold tracking-widest px-10 py-4 rounded-full hover:bg-[#6B1010] hover:scale-105 transition-all duration-300 shadow-lg shadow-[#8B1A1A]/30"
+          className="inline-block bg-[#8B1A1A] text-white font-bold tracking-widest px-10 py-4 rounded-full hover:bg-[#F88E8E] transition-all duration-300 shadow-lg shadow-[#8B1A1A]/30"
         >
-          DONOR SEKARANG
+          CARI DONOR
         </Link>
       </div>
     </section>
@@ -403,7 +409,7 @@ function Kegiatan() {
       <div className="flex justify-center">
         <Link
           href="/Kegiatan"
-          className="inline-block bg-[#7B1818] text-white font-black tracking-widest px-12 py-4 rounded-full hover:bg-[#5B0E0E] hover:scale-105 transition-all duration-300 shadow-lg"
+          className="inline-block bg-[#7B1818] text-white font-black tracking-widest px-12 py-4 rounded-full hover:bg-[#F88E8E] transition-all duration-300 shadow-lg"
           style={{ fontSize: "0.85rem", letterSpacing: "0.2em" }}
         >
           LIHAT SELENGKAPNYA
@@ -456,7 +462,7 @@ function Berita() {
           suppressHydrationWarning
           onClick={prev}
           disabled={current === 0}
-          className="flex-shrink-0 w-12 h-12 rounded-full bg-[#7B1818] text-white flex items-center justify-center hover:bg-[#5B0E0E] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex-shrink-0 w-12 h-12 rounded-full bg-[#7B1818] text-white flex items-center justify-center hover:bg-[#F88E8E] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -492,7 +498,7 @@ function Berita() {
           suppressHydrationWarning
           onClick={next}
           disabled={current === max}
-          className="flex-shrink-0 w-12 h-12 rounded-full bg-[#7B1818] text-white flex items-center justify-center hover:bg-[#5B0E0E] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex-shrink-0 w-12 h-12 rounded-full bg-[#7B1818] text-white flex items-center justify-center hover:bg-[#F88E8E] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -506,8 +512,49 @@ function Berita() {
 // ─── BloodMap ─────────────────────────────────────────────────────────────────
 
 function BloodMap() {
+  const [mapData, setMapData] = useState<any[]>([]);
+
+  useEffect(() => {
+  const fetch = async () => {
+    const { data } = await supabase
+      .from("stok_darah")
+      .select(`
+        jumlah_kantong,
+        golongan_darah,
+        rhesus,
+        institusi:pmi_id (
+          provinsi
+        )
+      `)
+      .eq("status", "tersedia");
+
+    if (!data) return;
+
+    // Kelompokkan per provinsi
+    const grouped: Record<string, { ada: number; kap: number }[]> = {};
+    data.forEach((row: any) => {
+      const provinsi = row.institusi?.provinsi;
+      if (!provinsi) return;
+      if (!grouped[provinsi]) grouped[provinsi] = [];
+      grouped[provinsi].push({
+        ada: row.jumlah_kantong,
+        kap: row.jumlah_kantong,
+      });
+    });
+
+    setMapData(
+      Object.entries(grouped).map(([wilayah, units]) => ({ wilayah, units }))
+    );
+  };
+  fetch();
+}, []);
+
   return (
-    <section id="persebaran" className="py-20 px-8 md:px-16" style={{ background: "linear-gradient(135deg, #FAF0EA 0%, #F5E0DA 100%)" }}>
+    <section
+      id="persebaran"
+      className="py-20 px-8 md:px-16"
+      style={{ background: "linear-gradient(135deg, #FAF0EA 0%, #F5E0DA 100%)" }}
+    >
       <h2
         className="text-center font-bold text-[#7B1818] mb-16"
         style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.8rem)" }}
@@ -515,68 +562,13 @@ function BloodMap() {
         Pantau Ketersediaan Stok Darah Di Seluruh Indonesia
       </h2>
 
-      <div className="relative max-w-5xl mx-auto" style={{ height: 500 }}>
-        <svg
-          viewBox="0 0 900 400"
-          className="absolute inset-0 w-full h-full"
-          style={{ filter: "drop-shadow(4px 6px 12px rgba(123,24,24,0.25))" }}
-        >
-          {/* Sumatera */}
-          <path d="M80,160 Q90,140 110,130 Q130,120 155,125 Q180,130 195,150 Q210,170 205,195 Q200,220 185,240 Q170,260 150,270 Q130,280 110,270 Q90,260 80,240 Q68,215 72,190 Q76,170 80,160Z" fill="#8B1A1A" />
-          {/* Jawa */}
-          <path d="M195,250 Q220,242 255,240 Q290,238 325,242 Q355,246 375,255 Q390,264 388,278 Q385,292 360,298 Q330,304 295,302 Q260,300 230,294 Q205,288 198,275 Q192,262 195,250Z" fill="#8B1A1A" />
-          {/* Bali + Lombok */}
-          <ellipse cx="410" cy="275" rx="18" ry="14" fill="#8B1A1A" />
-          <ellipse cx="435" cy="278" rx="12" ry="10" fill="#8B1A1A" />
-          {/* Kalimantan */}
-          <path d="M280,80 Q310,65 345,68 Q385,72 415,88 Q445,105 455,130 Q462,155 450,178 Q438,200 415,210 Q390,220 360,215 Q330,210 305,195 Q278,178 270,155 Q262,130 268,108 Q273,90 280,80Z" fill="#8B1A1A" />
-          {/* Sulawesi */}
-          <path d="M490,90 Q505,80 522,85 Q538,90 545,108 Q552,125 545,148 Q538,168 525,178 Q512,188 498,182 Q485,175 480,158 Q475,140 480,120 Q484,102 490,90Z M525,145 Q540,138 555,145 Q568,152 570,168 Q572,184 562,195 Q550,205 537,200 Q524,195 520,180 Q517,165 525,145Z" fill="#8B1A1A" />
-          {/* Maluku */}
-          <ellipse cx="575" cy="210" rx="14" ry="10" fill="#8B1A1A" opacity="0.8" />
-          <ellipse cx="600" cy="225" rx="10" ry="8" fill="#8B1A1A" opacity="0.8" />
-          {/* NTT */}
-          <ellipse cx="480" cy="270" rx="22" ry="10" fill="#8B1A1A" />
-          <ellipse cx="520" cy="278" rx="18" ry="9" fill="#8B1A1A" />
-          <ellipse cx="555" cy="272" rx="14" ry="8" fill="#8B1A1A" />
-          {/* Papua */}
-          <path d="M650,110 Q690,95 730,100 Q768,106 790,128 Q810,150 808,178 Q805,205 785,222 Q762,238 735,240 Q705,242 680,228 Q654,213 643,188 Q633,162 638,138 Q643,118 650,110Z" fill="#8B1A1A" />
-          <path d="M790,140 Q812,135 830,148 Q845,162 840,180 Q834,197 818,202 Q802,207 793,194 Q784,180 787,162 Q789,148 790,140Z" fill="#8B1A1A" />
-
-          {regions.map((r) => {
-            const cx = parseFloat(r.x) * 9;
-            const cy = parseFloat(r.y) * 4;
-            const lx = parseFloat(r.labelX) * 9 + 40;
-            const ly = parseFloat(r.labelY) * 4 + 12;
-            return (
-              <g key={r.name}>
-                <line x1={cx} y1={cy} x2={lx} y2={ly} stroke="#7B1818" strokeWidth="1" />
-                <circle cx={cx} cy={cy} r="5" fill="white" stroke="#7B1818" strokeWidth="2" />
-              </g>
-            );
-          })}
-        </svg>
-
-        {regions.map((r) => (
-          <div
-            key={r.name}
-            className="absolute"
-            style={{ left: r.labelX, top: r.labelY, transform: "translate(-50%, -50%)" }}
-          >
-            <div className="bg-[#F4BABA]/80 backdrop-blur-sm rounded-2xl px-4 py-2 text-center whitespace-nowrap shadow-sm border border-[#F4BABA]">
-              <div className="font-extrabold text-[#7B1818] text-sm tracking-wider">{r.name}</div>
-              <div className="text-[#7B1818] text-sm">
-                <span className="font-bold">{r.kantong}</span>{" "}
-                <span className="italic opacity-70 text-xs">KANTONG</span>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        <p className="absolute bottom-0 right-0 text-[#7B1818] opacity-50 text-xs italic">
-          *Data Stok Darah Diperbarui Secara Berkala
-        </p>
+      <div className="max-w-5xl mx-auto rounded-3xl overflow-hidden border border-rose-100 shadow-lg" style={{ height: 500 }}>
+        <MapPetaStok data={mapData} />
       </div>
+
+      <p className="text-center text-[#7B1818] opacity-50 text-xs italic mt-4">
+        *Data Stok Darah Diperbarui Secara Berkala
+      </p>
     </section>
   );
 }
