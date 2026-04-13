@@ -8,6 +8,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "placehold.co",
       },
+      {
+        protocol: "https",
+        hostname: "gznqpobpnixktcpykoez.supabase.co",  // ← tambah ini
+      },
     ],
   },
 };
