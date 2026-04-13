@@ -78,13 +78,13 @@ const permintaanAktif: PermintaanAktifItem[] = [
 ];
 
 const navItems = [
-  { label: "Beranda",     icon: Home,          href: "/" },
-  { label: "Layanan",     icon: Cross,         href: "/layanan" },
-  { label: "Persebaran",  icon: Map,           href: "/persebaran" },
+  { label: "Beranda",     icon: Home,          href: "/Dashboard" },
+  { label: "Layanan",     icon: Cross,         href: "/Permintaan" },
+  { label: "Persebaran",  icon: Map,           href: "/Petastok" },
   { label: "Komunitas",   icon: UserCircle,    href: "/komunitas" },
-  { label: "Berita",      icon: Newspaper,     href: "/berita" },
-  { label: "Kegiatan",    icon: Calendar,      href: "/kegiatan" },
-  { label: "Permintaan",  icon: ClipboardList, href: "/permintaan" },
+  { label: "Berita",      icon: Newspaper,     href: "/Berita" },
+  { label: "Kegiatan",    icon: Calendar,      href: "/Kegiatan" },
+  { label: "Permintaan Aktif",  icon: ClipboardList, href: "/Permintaanaktif" },
 ];
 
 function StokDarahBar({ item }: { item: StokDarahItem }) {
