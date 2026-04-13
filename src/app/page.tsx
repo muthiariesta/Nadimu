@@ -216,14 +216,14 @@ function Navbar() {
               onClick={() => scrollTo("beranda")}
               className="text-[#8B1A1A] font-medium text-lg text-left py-1 hover:opacity-70"
             >
-              🩸 Donor Darah
+              Donor Darah
             </button>
             <button
               suppressHydrationWarning
               onClick={() => scrollTo("cari-donor")}
               className="text-[#8B1A1A] font-medium text-lg text-left py-1 hover:opacity-70"
             >
-              🔍 Cari Donor
+              Cari Donor
             </button>
           </div>
           <Link

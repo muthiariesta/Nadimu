@@ -194,8 +194,16 @@ export default function ProfilPage() {
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <span className="text-lg font-extrabold text-[#7D0A0A]">Riwayat Donor</span>
-              <button className="text-[#7D0A0A] hover:opacity-70 transition-opacity cursor-pointer">
+              <span
+                onClick={() => router.push("/Riwayatdonor")}
+                className="text-lg font-extrabold text-[#7D0A0A] cursor-pointer hover:opacity-70 transition-opacity"
+              >
+                Riwayat Donor
+              </span>
+              <button
+                onClick={() => router.push("/Riwayatdonor")}
+                className="text-[#7D0A0A] hover:opacity-70 transition-opacity cursor-pointer"
+              >
                 <ChevronRight size={28} />
               </button>
             </div>
@@ -209,15 +217,23 @@ export default function ProfilPage() {
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-lg font-extrabold text-[#7D0A0A]">Tukar Poin</span>
+                <span
+                  onClick={() => router.push("/Tukarpoin")}
+                  className="text-lg font-extrabold text-[#7D0A0A] cursor-pointer hover:opacity-70 transition-opacity"
+                >
+                  Tukar Poin
+                </span>
                 <span className="bg-[#7FB73C]/50 text-[#4A7811] text-sm font-bold px-3 py-1 rounded-full">
                   {userProfile.poin} poin
                 </span>
               </div>
-              <button className="text-[#7D0A0A] hover:opacity-70 transition-opacity cursor-pointer">
-                <ChevronRight size={28} />
-              </button>
-            </div>
+  <button
+    onClick={() => router.push("/Tukarpoin")}
+    className="text-[#7D0A0A] hover:opacity-70 transition-opacity cursor-pointer"
+  >
+    <ChevronRight size={28} />
+  </button>
+</div>
             <div className="grid grid-cols-3 gap-4">
               {tukarPoinList.map((item) => (
                 <TukarPoinCard
