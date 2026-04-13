@@ -58,10 +58,10 @@ const faqs = [
   },
 ];
 
-const MapPetaStok = dynamic(() => import("@/components/MapPetaStok"), {
+const MapHero = dynamic(() => import("@/components/Peta"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center">
+    <div className="w-full h-64 flex items-center justify-center">
       <p className="text-[#7B1818] opacity-50 text-sm">Memuat peta...</p>
     </div>
   ),
@@ -512,63 +512,20 @@ function Berita() {
 // ─── BloodMap ─────────────────────────────────────────────────────────────────
 
 function BloodMap() {
-  const [mapData, setMapData] = useState<any[]>([]);
-
-  useEffect(() => {
-  const fetch = async () => {
-    const { data } = await supabase
-      .from("stok_darah")
-      .select(`
-        jumlah_kantong,
-        golongan_darah,
-        rhesus,
-        institusi:pmi_id (
-          provinsi
-        )
-      `)
-      .eq("status", "tersedia");
-
-    if (!data) return;
-
-    // Kelompokkan per provinsi
-    const grouped: Record<string, { ada: number; kap: number }[]> = {};
-    data.forEach((row: any) => {
-      const provinsi = row.institusi?.provinsi;
-      if (!provinsi) return;
-      if (!grouped[provinsi]) grouped[provinsi] = [];
-      grouped[provinsi].push({
-        ada: row.jumlah_kantong,
-        kap: row.jumlah_kantong,
-      });
-    });
-
-    setMapData(
-      Object.entries(grouped).map(([wilayah, units]) => ({ wilayah, units }))
-    );
-  };
-  fetch();
-}, []);
-
   return (
     <section
       id="persebaran"
-      className="py-20 px-8 md:px-16"
+      className="py-20"
       style={{ background: "linear-gradient(135deg, #FAF0EA 0%, #F5E0DA 100%)" }}
     >
       <h2
-        className="text-center font-bold text-[#7B1818] mb-16"
+        className="text-center font-bold text-[#7B1818] mb-10 px-8"
         style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.8rem)" }}
       >
         Pantau Ketersediaan Stok Darah Di Seluruh Indonesia
       </h2>
 
-      <div className="max-w-5xl mx-auto rounded-3xl overflow-hidden border border-rose-100 shadow-lg" style={{ height: 500 }}>
-        <MapPetaStok data={mapData} />
-      </div>
-
-      <p className="text-center text-[#7B1818] opacity-50 text-xs italic mt-4">
-        *Data Stok Darah Diperbarui Secara Berkala
-      </p>
+      <MapHero />
     </section>
   );
 }
