@@ -1,386 +1,230 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Share2, MapPin, Trophy, Flame, Heart, Star, ChevronRight } from "lucide-react";
+import { UserCircle } from "lucide-react";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+interface UserProfile {
+  nama: string;
+  email: string;
+  golongan: string;
+  lokasi: string;
+  bergabung: string;
+  jumlahDonor: number;
+  poin: number;
+}
 
-interface Achievement {
+interface PencapaianItem {
   id: string;
-  icon: string;
-  title: string;
-  desc: string;
-  unlocked: boolean;
-  color: string;
+  icon: React.ReactNode;
+  nama: string;
+  deskripsi: string;
+  tercapai: boolean;
 }
 
-interface DonorHistory {
-  pmi: string;
-  date: string;
-  points: number;
-}
-
-interface RewardItem {
+interface RiwayatDonorItem {
   id: string;
-  icon: string;
-  title: string;
-  provider: string;
-  points: number;
-  providerIcon: string;
+  lokasi: string;
+  tanggal: string;
+  poin: number;
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
+interface TukarPoinItem {
+  id: string;
+  icon: React.ReactNode;
+  nama: string;
+  lokasi: string;
+  poin: number;
+  stok: number;
+}
 
-const USER = {
-  name: "Benedicta Sherin",
+const userProfile: UserProfile = {
+  nama: "Benedicta Sherin",
   email: "benedictpresley@gmail.com",
-  bloodType: "O+",
-  region: "Tambun Selatan",
-  joinDate: "Bergabung Februari 2024",
-  donorCount: 4,
-  totalPoints: 1000,
-  shareText: "Bagikan pencapaianmu dan ajak orang lain untuk jadi penyelamat",
+  golongan: "O+",
+  lokasi: "Tambun Selatan",
+  bergabung: "Februari 2024",
+  jumlahDonor: 4,
+  poin: 1000,
 };
 
-const ACHIEVEMENTS: Achievement[] = [
-  {
-    id: "first-blood",
-    icon: "🩸",
-    title: "First Blood",
-    desc: "Donor pertama kali",
-    unlocked: true,
-    color: "bg-rose-100 border-rose-300 text-rose-700",
-  },
-  {
-    id: "on-streak",
-    icon: "🔥",
-    title: "On Streak",
-    desc: "Tiga kali donor berturut-turut",
-    unlocked: true,
-    color: "bg-orange-100 border-orange-300 text-orange-700",
-  },
-  {
-    id: "live-saver",
-    icon: "💊",
-    title: "Live Saver",
-    desc: "Lima kali donor",
-    unlocked: false,
-    color: "bg-gray-100 border-gray-200 text-gray-400",
-  },
-  {
-    id: "rare-hero",
-    icon: "⭐",
-    title: "Rare Hero",
-    desc: "Menyumbang golongan darah langka",
-    unlocked: false,
-    color: "bg-gray-100 border-gray-200 text-gray-400",
-  },
+const pencapaianList: PencapaianItem[] = [
+  { id: "p1", icon: <Trophy size={24} />,  nama: "First Blood",  deskripsi: "Donor pertama kali",              tercapai: true  },
+  { id: "p2", icon: <Flame size={24} />,   nama: "On Streak",    deskripsi: "Tiga kali donor berturut-turut",  tercapai: true  },
+  { id: "p3", icon: <Heart size={24} />,   nama: "Live Saver",   deskripsi: "Lima kali donor",                 tercapai: false },
+  { id: "p4", icon: <Star size={24} />,    nama: "Rare Hero",    deskripsi: "Menyumbang golongan darah langka", tercapai: false },
 ];
 
-const DONOR_HISTORY: DonorHistory[] = [
-  { pmi: "PMI Bekasi", date: "12 Des 2025", points: 200 },
-  { pmi: "PMI Tambun", date: "3 Sep 2025", points: 200 },
-  { pmi: "PMI Bekasi", date: "20 Jun 2025", points: 200 },
-  { pmi: "RS Adam Malik", date: "1 Mar 2025", points: 200 },
+const riwayatDonorList: RiwayatDonorItem[] = [
+  { id: "r1", lokasi: "PMI Bekasi", tanggal: "12 Des 2025", poin: 200 },
 ];
 
-const REWARDS: RewardItem[] = [
-  {
-    id: "checkup",
-    icon: "🏥",
-    title: "Medical Check-Up Gratis",
-    provider: "RS Hermina",
-    points: 1500,
-    providerIcon: "🏨",
-  },
-  {
-    id: "pin",
-    icon: "📌",
-    title: "Enamel Pin PMI",
-    provider: "PMI Terdekat",
-    points: 1000,
-    providerIcon: "🩸",
-  },
-  {
-    id: "sembako",
-    icon: "🛒",
-    title: "Hampers Sembako",
-    provider: "PMI Terdekat",
-    points: 1000,
-    providerIcon: "🩸",
-  },
+const tukarPoinList: TukarPoinItem[] = [
+  { id: "t1", icon: <Heart size={20} />, nama: "Medical Check-Up Gratis", lokasi: "RS Hermina", poin: 1000, stok: 1000 },
+  { id: "t2", icon: <Star size={20} />, nama: "Enamel Pin PMI", lokasi: "PMI Terdekat", poin: 1000, stok: 1000 },
+  { id: "t3", icon: <Trophy size={20} />, nama: "Hampers Sembako", lokasi: "PMI Terdekat", poin: 1000, stok: 1000 },
 ];
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function Avatar() {
+function PencapaianCard({ item }: { item: PencapaianItem }) {
   return (
-    <div className="relative w-16 h-16 rounded-full bg-[#7A1A1A] flex items-center justify-center flex-shrink-0 shadow-md">
-      <svg viewBox="0 0 24 24" className="w-9 h-9 text-rose-200" fill="currentColor">
-        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-      </svg>
-    </div>
-  );
-}
-
-function DonorBadge({ count }: { count: number }) {
-  return (
-    <div className="bg-[#7A1A1A] text-white rounded-xl px-5 py-3 text-center shadow-lg min-w-[90px]">
-      <p className="text-xs font-semibold tracking-widest uppercase opacity-80 mb-0.5">Donor</p>
-      <p className="text-4xl font-black leading-none">{count}X</p>
-    </div>
-  );
-}
-
-function AchievementCard({ a }: { a: Achievement }) {
-  return (
-    <div
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200 ${
-        a.unlocked
-          ? "bg-white border-rose-200 shadow-sm hover:shadow-md hover:-translate-y-0.5"
-          : "bg-gray-50 border-gray-200 opacity-60"
-      }`}
-    >
-      <div
-        className={`w-9 h-9 rounded-full flex items-center justify-center text-lg flex-shrink-0 ${
-          a.unlocked ? "bg-rose-100" : "bg-gray-100"
-        }`}
-      >
-        <span className={a.unlocked ? "" : "grayscale"}>{a.icon}</span>
+    <div className={`flex items-center gap-4 rounded-2xl px-4 py-3 border-2 shadow-lg ${
+      item.tercapai
+        ? "bg-[#F7D4CC] border-[#7D0A0A]"
+        : "bg-[#F3E9E7] border-[#7D0A0A]"}`}>
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${
+        item.tercapai ? "bg-[#7D0A0A] text-[#FCFAEE]" : "bg-[#BF3131]/30 text-[#FCFAEE]/60"
+      }`}>
+        {item.icon}
       </div>
-      <div>
-        <p className={`text-sm font-bold ${a.unlocked ? "text-[#3D0A0A]" : "text-gray-400"}`}>
-          {a.title}
-        </p>
-        <p className={`text-xs ${a.unlocked ? "text-rose-500" : "text-gray-400"}`}>{a.desc}</p>
+      <div className="flex flex-col">
+        <span className={`text-md font-bold ${item.tercapai ? "text-[#7D0A0A]" : "text-[#7D0A0A]/60"}`}>
+          {item.nama}
+        </span>
+        <span className={`text-sm ${item.tercapai ? "text-[#7D0A0A]" : "text-[#7D0A0A]/60"}`}>
+          {item.deskripsi}
+        </span>
       </div>
     </div>
   );
 }
 
-function HistoryRow({ h, isFirst }: { h: DonorHistory; isFirst: boolean }) {
+function RiwayatDonorCard({ item }: { item: RiwayatDonorItem }) {
   return (
-    <div
-      className={`flex items-center justify-between py-3 ${
-        !isFirst ? "border-t border-rose-100" : ""
-      }`}
-    >
-      <div>
-        <p className="text-sm font-bold text-[#3D0A0A]">{h.pmi}</p>
-        <p className="text-xs text-rose-400 mt-0.5">{h.date}</p>
+    <div className="flex items-center justify-between bg-[#F7D4CC] border-2 border-[#7D0A0A] rounded-2xl px-5 py-4">
+      <div className="flex flex-col gap-1">
+        <span className="text-md font-bold text-[#7D0A0A]">{item.lokasi}</span>
+        <span className="text-sm text-[#7D0A0A]">{item.tanggal}</span>
       </div>
-      <span className="text-sm font-bold text-[#7A1A1A] bg-rose-50 px-3 py-1 rounded-full">
-        +{h.points} poin
-      </span>
+      <span className="text-md font-bold text-[#47770D]">+{item.poin} poin</span>
     </div>
   );
 }
 
-function RewardCard({ r, userPoints }: { r: RewardItem; userPoints: number }) {
-  const canAfford = userPoints >= r.points;
-  const [redeemed, setRedeemed] = useState(false);
-
+function TukarPoinCard({ item, userPoin, onTukar }: { item: TukarPoinItem; userPoin: number; onTukar: (id: string) => void }) {
+  const bisaTukar = userPoin >= item.poin;
+  const habis = item.stok === 0;
   return (
-    <div className="bg-white rounded-2xl border border-rose-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow duration-200">
-      <div className="p-4 flex-1">
-        <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-xl mb-3">
-          {r.icon}
+    <div className="realtive flex flex-col  w-full bg-[#FCE4E4] border border-[#7D0A0A] rounded-[24px]">
+      <div className="flex justify-center -mt-5 mb-2">
+        <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-md border border-[#7D0A0A]/20 z-10 bg-[#7D0A0A] text-[#FCFAEE]">
+          {item.icon}
         </div>
-        <p className="text-sm font-bold text-[#3D0A0A] leading-tight mb-2">{r.title}</p>
-        <div className="flex items-center gap-1 text-xs text-rose-500 mb-1">
-          <span>{r.providerIcon}</span>
-          <span>{r.provider}</span>
+      </div>
+
+      <div className="px-3 pb-5 flex flex-col items-center gap-1 flex-1">
+        <h3 className="font-bold text-lg text-center leading-tight min-h-[40px] flex items-center justify-center mt-1 text-[#7D0A0A]">
+          {item.nama}"
+        </h3>
+        <div className="flex items-center gap-1">
+          <MapPin size={24} color="#7D0A0A" />
+          <span className="text-md text-[#7D0A0A]">{item.lokasi}</span>
         </div>
-        <p className="text-xs font-bold text-[#7A1A1A]">{r.points.toLocaleString("id")} poin</p>
+        <p className="text-md font-black mt-2 text-[#47770D]">{item.poin} poin</p>
       </div>
       <button
-        suppressHydrationWarning
-        disabled={!canAfford || redeemed}
-        onClick={() => canAfford && setRedeemed(true)}
-        className={`w-full py-2.5 text-xs font-black tracking-widest uppercase transition-all duration-200 ${
-          redeemed
-            ? "bg-green-500 text-white cursor-default"
-            : canAfford
-            ? "bg-[#7A1A1A] text-white hover:bg-[#5A0E0E] active:scale-95"
-            : "bg-gray-100 text-gray-400 cursor-not-allowed"
-        }`}
-      >
-        {redeemed ? "✓ Ditukar" : "Tukarkan"}
+        onClick={() => onTukar(item.id)}
+        disabled={!bisaTukar}
+        className="w-full py-3.5 font-bold text-md transition-all duration-200 outline-none
+                   bg-[#7D0A0A] text-[#FCFAEE] border-t border-[#7D0A0A] rounded-b-[22px]
+                   hover:bg-[#F88E8E] active:bg-[#F88E8E] active:text-[#7D0A0A]
+                   disabled:opacity-40">
+        {habis ? "HABIS" : "TUKARKAN"}
       </button>
     </div>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function ProfilPage() {
+  const router = useRouter();
 
-export default function ProfilePage() {
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [rewardOpen, setRewardOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  function handleShare() {
-    navigator.clipboard?.writeText("Ayo donor darah bersama Nadimu! 🩸").catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  const visibleHistory = historyOpen ? DONOR_HISTORY : DONOR_HISTORY.slice(0, 1);
+  const handleTukar = (id: string) => {
+    alert(`Tukar poin item id: ${id}`);
+  };
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
-        * { font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; }
-      `}</style>
+    <div className="min-h-screen font-[Plus_Jakarta_Sans] bg-[radial-gradient(ellipse_at_center,#e8c0c0_0%,#f3e4e4_40%,#FCFAEE_100%)] px-6 py-8 flex flex-col gap-6">
+      <div className="relative flex items-center justify-center mb-2">
+        <button
+        onClick={() => router.back()}
+        className="absolute left-0 text-[#7D0A0A] cursor-pointer hover:opacity-70 transition-opacity">
+          <ArrowLeft size={28} />
+        </button>
+      </div>
+      <div className="flex items-start gap-6 px-15">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-24 h-24 bg-[#7D0A0A] rounded-full flex items-center justify-center">
+            <UserCircle size={72} color="#FCFAEE" strokeWidth={1.5}/>
+          </div>
+          <span className="text-md font-semibold text-[#7D0A0A] cursor-pointer hover:underline">Edit Profil</span>
+        </div>
 
-      <div className="min-h-screen bg-[#FDF5F2] p-4 md:p-8">
-        {/* Back nav */}
-        <div className="max-w-5xl mx-auto">
-          <button
-            suppressHydrationWarning
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 text-sm text-rose-400 hover:text-[#7A1A1A] mb-4 transition-colors"
-          >
-            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M19 12H5M12 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Profil
-          </button>
+        <div className="flex flex-col gap-1 flex-1">
+          <span className="text-4xl font-extrabold text-[#7D0A0A]">{userProfile.nama}</span>
+          <span className="text-lg text-[#7D0A0A]">{userProfile.email}</span>
+          <span className="text-lg text-[#7D0A0A]">
+            {userProfile.golongan} &nbsp;|&nbsp; {userProfile.lokasi} &nbsp;|&nbsp; Bergabung {userProfile.bergabung}
+          </span>
+          <div className="flex items-center justify-between bg-[#EA7B7B]/50 rounded-lg px-4 py-2 mt-1.5 w-[800px]">
+            <span className="text-sm text-[#7D0A0A]">Bagikan pencapaianmu dan ajak orang lain untuk jadi penyelamat</span>
+            <Share2 size={18} color="#7D0A0A" className="shrink-0 ml-2 cursor-pointer" />
+          </div>
+        </div>
 
-          {/* ── Profile card ─────────────────────────────────────────────────── */}
-          <div className="bg-white rounded-3xl border border-rose-100 shadow-sm p-5 md:p-7 mb-5">
-            <div className="flex flex-wrap items-start gap-4 mb-4">
-              {/* Avatar + info */}
-              <div className="flex items-start gap-4 flex-1 min-w-0">
-                <div>
-                  <Avatar />
-                  <button
-                    suppressHydrationWarning
-                    onClick={() => setEditMode(!editMode)}
-                    className="text-[10px] text-rose-400 hover:text-[#7A1A1A] mt-1.5 block text-center w-full transition-colors"
-                  >
-                    Edit Profil
-                  </button>
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-xl font-black text-[#3D0A0A] leading-tight">{USER.name}</h1>
-                  <p className="text-xs text-rose-400 mt-0.5">{USER.email}</p>
-                  <p className="text-xs text-rose-400 mt-0.5">
-                    {USER.bloodType} | {USER.region} | {USER.joinDate}
-                  </p>
-                  <button
-                    suppressHydrationWarning
-                    onClick={handleShare}
-                    className="flex items-center gap-2 mt-2 text-xs text-[#7A1A1A] bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-full px-3 py-1 transition-all"
-                  >
-                    <span className="truncate max-w-[200px] md:max-w-xs">{USER.shareText}</span>
-                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                  {copied && (
-                    <p className="text-[10px] text-green-500 mt-1">Link disalin!</p>
-                  )}
-                </div>
-              </div>
+        <div className="bg-[#7D0A0A] text-[#FCFAEE] rounded-2xl px-8 py-5 flex flex-col items-center justify-center min-w-[160px] h-[160px]">
+          <span className="text-4xl font-semibold">Donor</span>
+          <span className="text-[70px] font-bold leading-none">{userProfile.jumlahDonor}X</span>
+        </div>
+      </div>
 
-              {/* Donor badge */}
-              <DonorBadge count={USER.donorCount} />
+      <div className="grid grid-cols-2 gap-6 px-15">
+        <div className="flex flex-col gap-4">
+          <span className="text-lg font-extrabold text-[#7D0A0A]">Pencapaian</span>
+          <div className="flex flex-col gap-4">
+            {pencapaianList.map((item) => (
+              <PencapaianCard key={item.id} item={item} />
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-extrabold text-[#7D0A0A]">Riwayat Donor</span>
+              <button className="text-[#7D0A0A] hover:opacity-70 transition-opacity cursor-pointer">
+                <ChevronRight size={28} />
+              </button>
             </div>
+            <div className="flex flex-col gap-2">
+              {riwayatDonorList.map((item) => (
+                <RiwayatDonorCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
 
-            {/* ── Two-column grid ──────────────────────────────────────────── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-
-              {/* Pencapaian */}
-              <div>
-                <h2 className="text-sm font-black text-[#3D0A0A] mb-3 uppercase tracking-wider">
-                  Pencapaian
-                </h2>
-                <div className="flex flex-col gap-2">
-                  {ACHIEVEMENTS.map((a) => (
-                    <AchievementCard key={a.id} a={a} />
-                  ))}
-                </div>
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-lg font-extrabold text-[#7D0A0A]">Tukar Poin</span>
+                <span className="bg-[#7FB73C]/50 text-[#4A7811] text-sm font-bold px-3 py-1 rounded-full">
+                  {userProfile.poin} poin
+                </span>
               </div>
-
-              {/* Riwayat Donor + Tukar Poin */}
-              <div className="flex flex-col gap-4">
-
-                {/* Riwayat Donor */}
-                <div className="bg-[#FDF5F2] rounded-2xl border border-rose-100 p-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <h2 className="text-sm font-black text-[#3D0A0A] uppercase tracking-wider">
-                      Riwayat Donor
-                    </h2>
-                    <button
-                      suppressHydrationWarning
-                      onClick={() => setHistoryOpen(!historyOpen)}
-                      className="text-rose-400 hover:text-[#7A1A1A] transition-colors"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className={`w-4 h-4 transition-transform duration-200 ${historyOpen ? "rotate-90" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
-                  </div>
-                  {visibleHistory.map((h, i) => (
-                    <HistoryRow key={i} h={h} isFirst={i === 0} />
-                  ))}
-                  {!historyOpen && DONOR_HISTORY.length > 1 && (
-                    <button
-                      suppressHydrationWarning
-                      onClick={() => setHistoryOpen(true)}
-                      className="text-xs text-rose-400 hover:text-[#7A1A1A] mt-1 transition-colors"
-                    >
-                      Lihat semua ({DONOR_HISTORY.length}) →
-                    </button>
-                  )}
-                </div>
-
-                {/* Tukar Poin */}
-                <div className="bg-[#FDF5F2] rounded-2xl border border-rose-100 p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-sm font-black text-[#3D0A0A] uppercase tracking-wider">
-                        Tukar Poin
-                      </h2>
-                      <span className="bg-[#7A1A1A] text-white text-xs font-bold px-3 py-0.5 rounded-full">
-                        {USER.totalPoints.toLocaleString("id")} poin
-                      </span>
-                    </div>
-                    <button
-                      suppressHydrationWarning
-                      onClick={() => setRewardOpen(!rewardOpen)}
-                      className="text-rose-400 hover:text-[#7A1A1A] transition-colors"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className={`w-4 h-4 transition-transform duration-200 ${rewardOpen ? "rotate-90" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {REWARDS.map((r) => (
-                      <RewardCard key={r.id} r={r} userPoints={USER.totalPoints} />
-                    ))}
-                  </div>
-                </div>
-
-              </div>
+              <button className="text-[#7D0A0A] hover:opacity-70 transition-opacity cursor-pointer">
+                <ChevronRight size={28} />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {tukarPoinList.map((item) => (
+                <TukarPoinCard
+                  key={item.id}
+                  item={item}
+                  userPoin={userProfile.poin}
+                  onTukar={handleTukar}/>
+              ))}
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
