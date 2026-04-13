@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import CardKegiatan from "@/components/CardKegiatan";
 
@@ -44,31 +45,22 @@ export default function KegiatanPage() {
     fetchKegiatan();
   }, [currentPage]);
 
-  const getPageNumbers = () => {
-    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
-    return [1, 2, 3, "...", totalPages]; 
-  };
-
   return (
-    <div 
-      className="min-h-screen px-4 md:px-8 py-8" 
-      style={{ background: "radial-gradient(circle, #FCFAEE 62%, #F88E8E 100%)" }}
-    >
-      <div className="max-w-5xl mx-auto flex items-center mb-10">
-        <button onClick={() => router.back()} className="text-[#7D0A0A] hover:opacity-70 transition-all">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
-        </button>
-        <h1
-          className="flex-1 text-center text-xl font-black tracking-widest uppercase pr-8"
-          style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+    <div className="min-h-screen bg-[radial-gradient(circle,_#FCFAEE_62%,_#F88E8E_100%)] px-8 py-8 font-[family-name:var(--font-plus-jakarta)] antialiased">
+      <div className="relative flex items-center justify-center mb-10">
+        <button 
+          onClick={() => router.back()} 
+          className="absolute left-0 p-1 text-[#7D0A0A] hover:opacity-60 transition-all"
         >
+          <ArrowLeft size={32} strokeWidth={3} />
+        </button>
+        
+        <h1 className="text-2xl font-black tracking-normal text-[#7D0A0A] text-center max-w-[80%] uppercase">
           KEGIATAN YANG SEDANG BERLANGSUNG
         </h1>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 justify-items-center">
           {kegiatanList.map((item) => (
             <CardKegiatan
@@ -86,10 +78,26 @@ export default function KegiatanPage() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-12 pb-8">
-           <button onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))} disabled={currentPage === 1} className="w-9 h-9 flex items-center justify-center rounded-full disabled:opacity-30" style={{ color: "#7D0A0A" }}>
-             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-           </button>
+        <div className="flex items-center justify-center gap-4 mt-12 pb-8">
+          <button 
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))} 
+            disabled={currentPage === 1} 
+            className="p-2 text-[#7D0A0A] disabled:opacity-30 hover:bg-[#F88E8E] rounded-full transition-all"
+          >
+            <ChevronLeft size={24} strokeWidth={3} />
+          </button>
+          
+          <span className="text-lg font-bold text-[#7D0A0A]">
+            {currentPage} / {totalPages}
+          </span>
+
+          <button 
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))} 
+            disabled={currentPage === totalPages} 
+            className="p-2 text-[#7D0A0A] disabled:opacity-30 hover:bg-[#F88E8E] rounded-full transition-all"
+          >
+            <ChevronRight size={24} strokeWidth={3} />
+          </button>
         </div>
       )}
     </div>

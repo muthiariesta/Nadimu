@@ -52,11 +52,11 @@ export async function middleware(request: NextRequest) {
 
   const role = profil?.role ?? "pengguna";
 
-  if (pathname.startsWith("/dashboard/pmi") && role !== "pmi") {
+  if (pathname.startsWith("/Dashboard/pmi") && role !== "pmi") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (pathname.startsWith("/dashboard/penyelenggara") && role !== "penyelenggara") {
+  if (pathname.startsWith("/Dashboard/penyelenggara") && role !== "penyelenggara") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
