@@ -29,45 +29,27 @@ export default function CardVoucher({ nama, deskripsi, poin_dibutuhkan, stok, on
   const habis = stok === 0;
 
   return (
-    <div
-      className="relative flex flex-col w-full"
-      style={{
-        background: "#FCE4E4",
-        border: "1px solid #7D0A0A",
-        borderRadius: "24px", // Radius luar yang konsisten
-      }}
-    >
+    <div className="relative flex flex-col w-full bg-[#FCE4E4] border border-[#7D0A0A] rounded-[24px]">
+      
       <div className="flex justify-center -mt-5 mb-2">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center shadow-md border border-[#7D0A0A]/20 z-10"
-          style={{ backgroundColor: "#7D0A0A", color: "#FCFAEE" }}
-        >
+        <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-md border border-[#7D0A0A]/20 z-10 bg-[#7D0A0A] text-[#FCFAEE]">
           {getIcon(nama)}
         </div>
       </div>
 
-      <div className="px-3 pb-5 flex flex-col items-center gap-1 flex-1">
-        <h3
-          className="font-bold text-[14px] text-center leading-tight min-h-[40px] flex items-center justify-center mt-1"
-          style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-        >
+      <div className="px-3 pb-5 flex flex-col items-center gap-1 flex-1 font-jakarta">
+        <h3 className="font-bold text-sm text-center leading-tight min-h-[40px] flex items-center justify-center mt-1 text-[#7D0A0A]">
           {nama ?? "-"}
         </h3>
 
         <div className="flex items-center justify-center gap-1 opacity-70">
           <MapPin size={12} className="text-[#7D0A0A]" />
-          <span
-            className="text-[11px] font-medium"
-            style={{ color: "#7D0A0A", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-          >
+          <span className="text-[11px] font-medium text-[#7D0A0A]">
             {getLocation(deskripsi)}
           </span>
         </div>
 
-        <p
-          className="text-[12px] font-black mt-2"
-          style={{ color: "#47770D", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-        >
+        <p className="text-xs font-black mt-2 text-[#47770D]">
           {poin_dibutuhkan} poin
         </p>
       </div>
@@ -75,15 +57,10 @@ export default function CardVoucher({ nama, deskripsi, poin_dibutuhkan, stok, on
       <button
         onClick={onTukar}
         disabled={habis}
-        className="w-full py-3.5 font-bold tracking-[0.2em] text-[12px] transition-all duration-200 outline-none
-                   hover:bg-[#a31d1d] active:bg-[#F88E8E] active:text-[#7D0A0A] disabled:opacity-40
-                   rounded-b-[22px]" // Ini kuncinya biar ga kotak pas diklik
-        style={{
-          backgroundColor: "#7D0A0A",
-          color: "#FCFAEE",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-          borderTop: "1px solid #7D0A0A",
-        }}
+        className="w-full py-3.5 font-bold text-sm transition-all duration-200 outline-none
+                   bg-[#7D0A0A] text-[#FCFAEE] border-t border-[#7D0A0A] rounded-b-[22px]
+                   hover:bg-[#a31d1d] active:bg-[#F88E8E] active:text-[#7D0A0A] 
+                   disabled:opacity-40 font-jakarta"
       >
         {habis ? "HABIS" : "TUKARKAN"}
       </button>

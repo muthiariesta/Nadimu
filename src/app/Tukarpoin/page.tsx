@@ -68,23 +68,17 @@ export default function TukarPoinPage() {
   };
 
   return (
-    <div
-      className="min-h-screen py-10"
-      style={{ 
-        background: "linear-gradient(180deg, #FDF0EE 0%, #FAE8E8 100%)",
-        fontFamily: "'Plus Jakarta Sans', sans-serif"
-      }}
-    >
-      <div className="relative flex items-center justify-center px-32 mb-10">
+    <div className="min-h-screen py-10 bg-gradient-to-b from-[#FDF0EE] to-[#FAE8E8] font-jakarta">
+      <div className="relative flex items-center justify-center px-8 mb-10">
         <button 
           onClick={() => router.back()} 
-          className="absolute left-32 p-2 rounded-full hover:bg-[#7D0A0A]/10 transition-colors"
+          className="absolute left-8 p-2 rounded-full transition-colors"
         >
-          <ArrowLeft size={32} className="text-[#7D0A0A]" strokeWidth={2.5} />
+          <ArrowLeft size={32} className="text-[#7D0A0A] hover:opacity-60" strokeWidth={2.5} />
         </button>
         
         <div className="text-center">
-          <h1 className="text-2xl font-black tracking-widest text-[#7D0A0A]">
+          <h1 className="text-2xl font-black text-[#7D0A0A]">
             TUKAR POIN
           </h1>
           <p className="text-sm font-semibold text-[#7D0A0A]/80 mt-1">
