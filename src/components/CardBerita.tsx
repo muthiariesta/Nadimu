@@ -13,7 +13,7 @@ interface CardBeritaProps {
 export default function CardBerita({ judul, slug, isi, gambar_url, onClick }: CardBeritaProps) {
   return (
     <div
-      className="flex flex-col rounded-3xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all w-full max-w-[300px] border"
+      className="flex flex-col rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all w-full max-w-[300px] border"
       style={{
         background: "rgba(234, 123, 123, 0.3)", 
         borderColor: "#F88E8E", 

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id" class="bg-transparent">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nadimu — Peta Stok Darah</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .blink { animation: blink 2s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+        #svg-map { cursor: grab; }
+        #svg-map:active { cursor: grabbing; }
+    </style>
+</head>
+<body class="bg-transparent w-full h-screen flex flex-col overflow-hidden">
+
+    <div class="relative flex-1 overflow-hidden" id="mapbox">
+        <div id="loader" class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3">
+            <div class="w-8 h-8 border-4 border-[#7D0A0A]/20 border-t-[#7D0A0A] rounded-full animate-spin"></div>
+            <div class="text-xs text-[#9A6060]">Memuat peta Indonesia...</div>
+        </div>
+
+        <div class="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#7D0A0A]/10 border border-[#7D0A0A]/25 text-[11px] font-bold text-[#7D0A0A]">
+            <div class="w-2.5 h-2.5 rounded-full bg-[#7FB73C] blink"></div>
+            REALTIME
+        </div>
+
+        <svg id="svg-map" class="w-full h-full block"></svg>
+
+        <div class="absolute bottom-12 left-4 z-10 flex gap-3">
+            <div class="flex items-center gap-1.5 text-[10px] font-bold text-[#7D0A0A]">
+                <div class="w-2.5 h-2.5 rounded-full bg-[#BF3131]"></div> Kritis
+            </div>
+            <div class="flex items-center gap-1.5 text-[10px] font-bold text-[#7D0A0A]">
+                <div class="w-2.5 h-2.5 rounded-full bg-[#F2E076]"></div> Waspada
+            </div>
+            <div class="flex items-center gap-1.5 text-[10px] font-bold text-[#7D0A0A]">
+                <div class="w-2.5 h-2.5 rounded-full bg-[#7FB73C]/50"></div> Aman
+            </div>
+        </div>
+
+        <div class="absolute bottom-12 right-4 z-10 flex flex-col gap-1.5">
+            <button onclick="zoomIn()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#7D0A0A]/10 border border-[#7D0A0A]/20 text-[#7D0A0A] hover:bg-[#F88E8E] hover:text-white transition-all">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+            <button onclick="zoomOut()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#7D0A0A]/10 border border-[#7D0A0A]/20 text-[#7D0A0A] hover:bg-[#F88E8E] hover:text-white transition-all">
+                <i data-lucide="minus" class="w-4 h-4"></i>
+            </button>
+            <button onclick="resetZoom()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#7D0A0A]/10 border border-[#7D0A0A]/20 text-[#7D0A0A] hover:bg-[#F88E8E] hover:text-white transition-all">
+                <i data-lucide="home" class="w-3.5 h-3.5"></i>
+            </button>
+        </div>
+
+        <div id="tip" class="absolute pointer-events-none opacity-0 z-50 min-w-[140px] p-3 rounded-xl bg-[#FCFAEE]/95 border border-[#E0C5BC] shadow-xl transition-opacity duration-200">
+            <div id="tip-n" class="text-xs font-bold text-[#7D0A0A] mb-0.5"></div>
+            <div id="tip-k" class="text-[11px] text-[#9A6060] mb-2"></div>
+            <div id="tip-s"></div>
+        </div>
+    </div>
+
+<script>
+const STOCK = {
+    sumatera: { nama: "Sumatera", cx: 104, cy: -1.5, units: [{ k: 15, kap: 100 }, { k: 42, kap: 80 }] },
+    jawa: { nama: "Jawa", cx: 110, cy: -7.5, units: [{ k: 45, kap: 200 }, { k: 85, kap: 150 }] },
+    kalimantan: { nama: "Kalimantan", cx: 114, cy: 0.5, units: [{ k: 22, kap: 80 }] },
+    sulawesi: { nama: "Sulawesi", cx: 121, cy: -2, units: [{ k: 35, kap: 60 }] },
+    balintt: { nama: "Bali & NTB", cx: 116.5, cy: -8.7, units: [{ k: 55, kap: 80 }] },
+    papua: { nama: "Papua", cx: 138, cy: -4.5, units: [{ k: 25, kap: 50 }] }
+};
+
+function getSt(k, kap) { const r = k / kap; return r < .25 ? 'kritis' : r < .5 ? 'waspada' : 'aman'; }
+function getC(s) { return { kritis: '#BF3131', waspada: '#F2E076', aman: 'rgba(127,183,60,0.53)' }[s]; }
+function regSt(key) { 
+    const ss = STOCK[key].units.map(u => getSt(u.k, u.kap));
+    return ss.includes('kritis') ? 'kritis' : ss.includes('waspada') ? 'waspada' : 'aman';
+}
+
+let svg, g, proj, path, W, H, zoomBehavior;
+
+async function loadMap() {
+    const box = document.getElementById('mapbox');
+    W = box.clientWidth; H = box.clientHeight;
+    svg = d3.select('#svg-map');
+    
+    try {
+        const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json');
+        const world = await res.json();
+        const countries = topojson.feature(world, world.objects.countries);
+        const indo = countries.features.find(f => +f.id === 360);
+
+        document.getElementById('loader').classList.add('hidden');
+        proj = d3.geoMercator().fitExtent([[40, 40], [W - 40, H - 40]], indo);
+        path = d3.geoPath().projection(proj);
+        g = svg.append('g');
+
+        g.append('path').datum(indo).attr('d', path).attr('fill', '#7D0A0A').attr('stroke', '#5A0808').attr('stroke-width', 0.5);
+
+        zoomBehavior = d3.zoom().scaleExtent([0.5, 8]).on('zoom', (e) => g.attr('transform', e.transform));
+        svg.call(zoomBehavior);
+        drawMarkers();
+        lucide.createIcons();
+    } catch (err) { console.error(err); }
+}
+
+function drawMarkers() {
+    if (!g) return;
+    g.selectAll('.mgrp').remove();
+    Object.keys(STOCK).forEach(key => {
+        const d = STOCK[key], s = regSt(key), c = getC(s);
+        const tot = d.units.reduce((a, u) => a + u.k, 0);
+        const [x, y] = proj([d.cx, d.cy]);
+        
+        const mg = g.append('g').attr('class', 'mgrp').attr('transform', `translate(${x},${y})`).style('cursor', 'pointer');
+        mg.append('circle').attr('r', 22).attr('fill', c).attr('opacity', 0.2);
+        mg.append('circle').attr('r', 16).attr('fill', c).attr('stroke', 'white').attr('stroke-width', 1.5);
+        
+        mg.append('text').attr('text-anchor', 'middle').attr('y', -2).attr('class', 'fill-[#3D0A0A] font-bold').style('font-size', '7px').text(d.nama.toUpperCase());
+        mg.append('text').attr('text-anchor', 'middle').attr('y', 8).attr('class', 'fill-[#3D0A0A] font-black').style('font-size', '10px').text(tot);
+
+        mg.on('mousemove', (e) => showTip(d.nama, tot, s, e)).on('mouseleave', hideTip);
+    });
+}
+
+function showTip(n, k, s, e) {
+    const tip = document.getElementById('tip');
+    document.getElementById('tip-n').textContent = n;
+    document.getElementById('tip-k').textContent = k + ' kantong tersedia';
+    const c = getC(s);
+    const tc = s === 'waspada' ? '#854D0E' : s === 'aman' ? '#166534' : '#991B1B';
+    document.getElementById('tip-s').innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold" style="background:${c}; color:${tc}">${s.toUpperCase()}</span>`;
+    tip.style.opacity = '1';
+    tip.style.left = (e.clientX + 15) + 'px';
+    tip.style.top = (e.clientY - 10) + 'px';
+}
+function hideTip() { document.getElementById('tip').style.opacity = '0'; }
+function zoomIn() { svg.transition().call(zoomBehavior.scaleBy, 1.5); }
+function zoomOut() { svg.transition().call(zoomBehavior.scaleBy, 0.7); }
+function resetZoom() { svg.transition().call(zoomBehavior.transform, d3.zoomIdentity); }
+
+window.onload = loadMap;
+</script>
+</body>
+</html>
