@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nadimu — Peta Stok Darah</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:transparent;width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+html{background:transparent}
+.wrap{display:flex;flex:1;overflow:hidden;position:relative}
+.mapbox{flex:1;position:relative;background:transparent;overflow:hidden}
+#svg-map{width:100%;height:100%;display:block;cursor:grab}
+#svg-map.dragging{cursor:grabbing}
+.prov{transition:fill .4s,opacity .3s}
+.realtime{position:absolute;top:14px;right:14px;background:rgba(125,10,10,0.1);border:1px solid rgba(125,10,10,0.25);border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#7D0A0A;font-family:'Plus Jakarta Sans',sans-serif;z-index:10}
+.dot{width:7px;height:7px;border-radius:50%;background:#7FB73C;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.leg{position:absolute;bottom:50px;left:14px;display:flex;gap:12px;z-index:10}
+.li{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:#7D0A0A;font-family:'Plus Jakarta Sans',sans-serif}
+.ld{width:10px;height:10px;border-radius:50%}
+.zoom-ctrl{position:absolute;bottom:50px;right:14px;display:flex;flex-direction:column;gap:4px;z-index:10}
+.zbtn{width:28px;height:28px;border-radius:7px;background:rgba(125,10,10,0.1);border:1px solid rgba(125,10,10,0.2);color:#7D0A0A;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;transition:background .15s}
+.zbtn:hover{background:rgba(125,10,10,0.2)}
+.simbtn{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(125,10,10,0.1);border:1px solid rgba(125,10,10,0.2);color:#7D0A0A;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;z-index:10;white-space:nowrap}
+.simbtn:hover{background:rgba(125,10,10,0.18)}
+.tip{position:absolute;background:rgba(252,250,238,0.97);border:1px solid #E0C5BC;border-radius:9px;padding:9px 13px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:50;min-width:130px;box-shadow:0 4px 16px rgba(125,10,10,0.1)}
+.tn{font-size:12px;font-weight:700;color:#7D0A0A;margin-bottom:2px;font-family:'Plus Jakarta Sans',sans-serif}
+.tk{font-size:11px;color:#9A6060;margin-bottom:5px;font-family:'Plus Jakarta Sans',sans-serif}
+.ts2{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif}
+.load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:20}
+.spinner{width:32px;height:32px;border:3px solid rgba(125,10,10,0.15);border-top-color:#7D0A0A;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hint{position:absolute;bottom:14px;left:14px;font-size:10px;color:rgba(125,10,10,0.45);font-family:'Plus Jakarta Sans',sans-serif;z-index:10}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mapbox" id="mapbox">
+    <div class="load" id="loader">
+      <div class="spinner"></div>
+      <div style="font-size:12px;color:#9A6060;font-family:'Plus Jakarta Sans',sans-serif">Memuat peta Indonesia...</div>
+    </div>
+    <svg id="svg-map"></svg>
+    <div class="realtime"><div class="dot"></div>Real-time</div>
+    <div class="leg">
+      <div class="li"><div class="ld" style="background:#BF3131"></div>Kritis</div>
+      <div class="li"><div class="ld" style="background:#F2E076"></div>Waspada</div>
+      <div class="li"><div class="ld" style="background:rgba(127,183,60,0.53)"></div>Aman</div>
+    </div>
+    <div class="zoom-ctrl">
+      <button class="zbtn" onclick="zoomIn()">+</button>
+      <button class="zbtn" onclick="zoomOut()">−</button>
+      <button class="zbtn" onclick="resetZoom()" title="Reset" style="font-size:11px">⌂</button>
+    </div>
+    <button class="simbtn" onclick="simUpdate()">⚡ Simulasi update PMI</button>
+    <div class="tip" id="tip">
+      <div class="tn" id="tip-n"></div>
+      <div class="tk" id="tip-k"></div>
+      <div id="tip-s"></div>
+    </div>
+  </div>
+</div>
+<script>
+const STOCK={
+  sumatera:{nama:"Sumatera",cx:104,cy:-1.5,units:[
+    {nama:"PMI Medan",kota:"Kota Medan",gol:"A+",k:15,kap:100},
+    {nama:"PMI Padang",kota:"Kota Padang",gol:"B+",k:42,kap:80},
+    {nama:"RS Adam Malik",kota:"Kota Medan",gol:"O-",k:8,kap:50},
+    {nama:"PMI Palembang",kota:"Kota Palembang",gol:"AB+",k:35,kap:60},
+  ]},
+  jawa:{nama:"Jawa",cx:110,cy:-7.5,units:[
+    {nama:"PMI Pusat",kota:"Jakarta Pusat",gol:"A+",k:45,kap:200},
+    {nama:"PMI Pusat",kota:"Jakarta Selatan",gol:"O-",k:12,kap:50},
+    {nama:"PMI Kota Bandung",kota:"Kota Bandung",gol:"B+",k:40,kap:46},
+    {nama:"RS Hasan Sadikin",kota:"Kota Bandung",gol:"A-",k:20,kap:50},
+    {nama:"PMI Surabaya",kota:"Kota Surabaya",gol:"O+",k:85,kap:150},
+    {nama:"PMI Yogyakarta",kota:"D.I. Yogyakarta",gol:"B-",k:18,kap:40},
+  ]},
+  kalimantan:{nama:"Kalimantan",cx:114,cy:0.5,units:[
+    {nama:"PMI Banjarmasin",kota:"Kota Banjarmasin",gol:"A+",k:22,kap:80},
+    {nama:"PMI Samarinda",kota:"Kota Samarinda",gol:"O+",k:10,kap:60},
+    {nama:"PMI Pontianak",kota:"Kota Pontianak",gol:"B+",k:28,kap:70},
+  ]},
+  sulawesi:{nama:"Sulawesi",cx:121,cy:-2,units:[
+    {nama:"PMI Makassar",kota:"Kota Makassar",gol:"A+",k:8,kap:100},
+    {nama:"PMI Manado",kota:"Kota Manado",gol:"B+",k:35,kap:60},
+    {nama:"PMI Palu",kota:"Kota Palu",gol:"O+",k:15,kap:50},
+  ]},
+  balintt:{nama:"Bali & NTB",cx:116.5,cy:-8.7,units:[
+    {nama:"PMI Denpasar",kota:"Kota Denpasar",gol:"A+",k:55,kap:80},
+    {nama:"PMI Mataram",kota:"Kota Mataram",gol:"O+",k:28,kap:50},
+  ]},
+  ntt:{nama:"NTT",cx:122,cy:-9.5,units:[
+    {nama:"PMI Kupang",kota:"Kota Kupang",gol:"O+",k:12,kap:40},
+  ]},
+  maluku:{nama:"Maluku",cx:128,cy:-3.5,units:[
+    {nama:"PMI Ambon",kota:"Kota Ambon",gol:"O+",k:30,kap:50},
+    {nama:"PMI Ternate",kota:"Kota Ternate",gol:"B+",k:10,kap:30},
+  ]},
+  papua:{nama:"Papua",cx:138,cy:-4.5,units:[
+    {nama:"PMI Jayapura",kota:"Kota Jayapura",gol:"A+",k:18,kap:60},
+    {nama:"RS Dok II",kota:"Kota Jayapura",gol:"B+",k:25,kap:50},
+    {nama:"PMI Merauke",kota:"Kota Merauke",gol:"O+",k:8,kap:40},
+  ]},
+};
+
+function getSt(k,kap){const r=k/kap;return r<.25?'kritis':r<.5?'waspada':'aman'}
+function getC(s){return{kritis:'#BF3131',waspada:'#F2E076',aman:'rgba(127,183,60,0.53)'}[s]}
+function regSt(key){const ss=STOCK[key].units.map(u=>getSt(u.k,u.kap));return ss.includes('kritis')?'kritis':ss.includes('waspada')?'waspada':'aman'}
+function totalK(key){return STOCK[key].units.reduce((a,u)=>a+u.k,0)}
+function overallSt(){const ss=Object.keys(STOCK).map(k=>regSt(k));return ss.includes('kritis')?'kritis':ss.includes('waspada')?'waspada':'aman'}
+
+let svg, g, proj, path, W, H, zoom, zoomBehavior;
+
+function initSVG(){
+  const box = document.getElementById('mapbox');
+  W = box.clientWidth;
+  H = box.clientHeight;
+  svg = d3.select('#svg-map');
+  svg.attr('width', W).attr('height', H);
+}
+
+function setupZoom(){
+  zoomBehavior = d3.zoom()
+    .scaleExtent([0.5, 8])
+    .on('start', () => document.getElementById('svg-map').classList.add('dragging'))
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform);
+    })
+    .on('end', () => document.getElementById('svg-map').classList.remove('dragging'));
+
+  svg.call(zoomBehavior);
+
+  svg.on('dblclick.zoom', null);
+}
+
+function zoomIn(){
+  svg.transition().duration(300).call(zoomBehavior.scaleBy, 1.5);
+}
+function zoomOut(){
+  svg.transition().duration(300).call(zoomBehavior.scaleBy, 0.67);
+}
+function resetZoom(){
+  svg.transition().duration(400).call(zoomBehavior.transform, d3.zoomIdentity);
+}
+
+async function loadMap(){
+  initSVG();
+  try{
+    const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json');
+    if(!res.ok) throw new Error('fetch failed');
+    const world = await res.json();
+    const countries = topojson.feature(world, world.objects.countries);
+    const indo = countries.features.find(f => +f.id === 360);
+    if(!indo) throw new Error('Indonesia not found');
+
+    document.getElementById('loader').style.display = 'none';
+
+    proj = d3.geoMercator().fitExtent([[20, 20], [W-20, H-20]], indo);
+    path = d3.geoPath().projection(proj);
+    g = svg.append('g');
+
+    svg.append('text').attr('x', W*.15).attr('y', H*.88)
+      .attr('fill','rgba(125,10,10,0.08)').attr('font-size',11)
+      .attr('font-family','Plus Jakarta Sans').attr('pointer-events','none').text('SAMUDRA HINDIA');
+    svg.append('text').attr('x', W*.72).attr('y', H*.2)
+      .attr('fill','rgba(125,10,10,0.08)').attr('font-size',10)
+      .attr('font-family','Plus Jakarta Sans').attr('pointer-events','none').text('SAMUDRA PASIFIK');
+
+    g.append('path').datum(indo)
+      .attr('d', path)
+      .attr('fill', '#7D0A0A')
+      .attr('stroke', '#5A0808')
+      .attr('stroke-width', 0.5)
+      .attr('stroke-linejoin', 'round');
+
+    setupZoom();
+    drawMarkers();
+
+    window.addEventListener('resize', () => {
+      initSVG();
+      proj = d3.geoMercator().fitExtent([[20,20],[W-20,H-20]], indo);
+      path = d3.geoPath().projection(proj);
+      g.select('path').attr('d', path);
+      drawMarkers();
+    });
+
+  }catch(err){
+    console.error(err);
+    document.getElementById('loader').innerHTML =
+      '<div style="font-size:12px;color:#BF3131;text-align:center;font-family:Plus Jakarta Sans">Gagal memuat peta.<br>Cek koneksi dan refresh.</div>';
+  }
+}
+
+function drawMarkers(){
+  if(!g || !proj) return;
+  g.selectAll('.mgrp').remove();
+  Object.keys(STOCK).forEach(key => {
+    const d = STOCK[key], s = regSt(key), c = getC(s), tot = totalK(key);
+    const [x, y] = proj([d.cx, d.cy]);
+    if(x < 0 || x > W || y < 0 || y > H) return;
+    const r = 16;
+    const mg = g.append('g').attr('class','mgrp').attr('transform',`translate(${x},${y})`).style('cursor','pointer');
+    mg.append('circle').attr('r', r+6).attr('fill', c).attr('opacity', .2);
+    mg.append('circle').attr('r', r).attr('fill', c).attr('opacity', .95)
+      .attr('stroke','rgba(255,255,255,0.5)').attr('stroke-width', 1.5);
+    mg.append('text').attr('text-anchor','middle').attr('y', -2)
+      .attr('font-size', 7).attr('font-weight', 700).attr('fill', '#3D0A0A')
+      .attr('font-family','Plus Jakarta Sans').attr('pointer-events','none')
+      .text(d.nama.split(' ')[0].toUpperCase());
+    mg.append('text').attr('text-anchor','middle').attr('y', 8)
+      .attr('font-size', 9.5).attr('font-weight', 800).attr('fill','#3D0A0A')
+      .attr('font-family','Plus Jakarta Sans').attr('pointer-events','none').text(tot);
+    mg.on('mousemove', (ev) => showTip(d.nama, tot, s, ev))
+      .on('mouseleave', hideTip)
+      .on('touchstart', (ev) => { ev.preventDefault(); showTip(d.nama, tot, s, ev.touches[0]); }, {passive:false})
+      .on('touchend', hideTip);
+  });
+}
+
+function showTip(name, total, status, event){
+  const tip = document.getElementById('tip');
+  const box = document.getElementById('mapbox').getBoundingClientRect();
+  document.getElementById('tip-n').textContent = name;
+  document.getElementById('tip-k').textContent = total + ' kantong tersedia';
+  const c = getC(status);
+  const tc = status==='waspada'?'#854D0E':status==='aman'?'#166534':'#991B1B';
+  document.getElementById('tip-s').innerHTML = `<span class="ts2" style="background:${c};color:${tc}">${status.charAt(0).toUpperCase()+status.slice(1)}</span>`;
+  tip.style.opacity = '1';
+  tip.style.left = (event.clientX - box.left + 14) + 'px';
+  tip.style.top = (event.clientY - box.top - 10) + 'px';
+}
+function hideTip(){ document.getElementById('tip').style.opacity = '0'; }
+
+function simUpdate(){
+  for(let i=0; i<4; i++){
+    const keys = Object.keys(STOCK), key = keys[Math.floor(Math.random()*keys.length)];
+    const unit = STOCK[key].units[Math.floor(Math.random()*STOCK[key].units.length)];
+    unit.k = Math.max(0, Math.min(unit.kap, unit.k + (Math.floor(Math.random()*18)-9)));
+  }
+  drawMarkers();
+}
+
+setInterval(() => {
+  const key = Object.keys(STOCK)[Math.floor(Math.random()*8)];
+  const unit = STOCK[key].units[Math.floor(Math.random()*STOCK[key].units.length)];
+  unit.k = Math.max(0, Math.min(unit.kap, unit.k + (Math.floor(Math.random()*6)-3)));
+  drawMarkers();
+}, 7000);
+
+loadMap();
+</script>
+</body>
+</html>

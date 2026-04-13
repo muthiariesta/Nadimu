@@ -3,13 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, MapPin, ChevronDown, ChevronUp } from "lucide-react";
-import dynamic from "next/dynamic";
-
-// Load peta tanpa SSR agar tidak error window is not defined
-const MapPetaStok = dynamic(() => import("@/components/MapPetaStok"), { 
-  ssr: false,
-  loading: () => <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-white font-bold">Memuat Peta...</div>
-});
 
 const GOLONGAN = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -147,8 +140,7 @@ export default function PetaStokPage() {
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
     >
-      {/* Header */}
-      <div className="flex items-center px-32 mb-4">
+      <div className="flex items-center px-6 md:px-32 mb-4">
         <button onClick={() => router.back()} className="text-[#7D0A0A]">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 5l-7 7 7 7" />
@@ -159,21 +151,34 @@ export default function PetaStokPage() {
         </h1>
       </div>
 
-      <p className="text-center font-bold text-base mb-5 px-32" style={{ color: "#7D0A0A" }}>
+      <p className="text-center font-bold text-base mb-5 px-6 md:px-32" style={{ color: "#7D0A0A" }}>
         Pantau Ketersediaan Stok Darah Di Seluruh Indonesia
       </p>
 
-      {/* Peta Integrasi Component */}
-      <div className="px-32 mb-3">
+      {/* Peta iframe — responsif */}
+      <div className="px-6 md:px-32 mb-3">
         <div
-          className="w-full rounded-3xl overflow-hidden shadow-2xl"
+          className="w-full rounded-3xl overflow-hidden"
           style={{
-            height: "480px",
+            position: "relative",
+            paddingBottom: "clamp(220px, 42%, 480px)",
+            height: 0,
             border: "1.5px solid #E0C5BC",
             boxShadow: "0 4px 24px rgba(125,10,10,0.08)",
           }}
         >
-          <MapPetaStok data={STOK_DATA} />
+          <iframe
+            src="/peta.html"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              border: "none",
+            }}
+            title="Peta Stok Darah Indonesia"
+          />
         </div>
         <p className="text-right text-xs mt-2 italic" style={{ color: "#9A6060" }}>
           *Data Stok Darah Diperbarui Secara Berkala
@@ -181,13 +186,13 @@ export default function PetaStokPage() {
       </div>
 
       {/* Persebaran Stok */}
-      <div id="persebaran-section" className="px-32 mt-8">
+      <div className="px-6 md:px-32 mt-8">
         <h2 className="text-center text-xl font-black tracking-widest mb-8" style={{ color: "#7D0A0A" }}>
           PERSEBARAN STOK DARAH
         </h2>
 
         <div
-          className="rounded-3xl p-8"
+          className="rounded-3xl p-6 md:p-8"
           style={{
             backgroundColor: "rgba(234,123,123,0.12)",
             border: "1.5px solid #E0C5BC",
@@ -228,7 +233,7 @@ export default function PetaStokPage() {
           </div>
 
           {/* Filter Status */}
-          <div className="flex gap-2 mb-6">
+          <div className="flex gap-2 flex-wrap mb-6">
             {[
               { key: "semua", label: "Semua Status", activeBg: "#1D9E75", activeText: "#fff" },
               { key: "kritis", label: "Kritis", activeBg: "#FECACA", activeText: "#991B1B" },
@@ -288,7 +293,7 @@ export default function PetaStokPage() {
                     <div className="py-3 flex flex-col gap-4">
                       {Object.entries(byKota).map(([kota, units]) => (
                         <div key={kota}>
-                          <p className="text-[10px] font-black tracking-widest mb-3 opacity-70" style={{ color: "#9A6060" }}>
+                          <p className="text-xs font-black tracking-widest mb-3" style={{ color: "#9A6060" }}>
                             {kota}
                           </p>
                           {units.map((u, i) => {
@@ -298,45 +303,37 @@ export default function PetaStokPage() {
                             return (
                               <div
                                 key={i}
-                                className="flex items-center gap-4 py-3 border-b"
-                                style={{ borderColor: "rgba(224,197,188,0.4)" }}
+                                className="flex flex-wrap md:flex-nowrap items-center gap-3 py-3 border-b"
+                                style={{ borderColor: "#E0C5BC" }}
                               >
-                                {/* Nama & Golongan */}
-                                <div style={{ minWidth: "180px" }}>
-                                  <p className="font-bold text-xs" style={{ color: "#7D0A0A" }}>{u.nama}</p>
-                                  <p className="text-[10px]" style={{ color: "#9A6060" }}>Gol. {u.gol}</p>
+                                <div style={{ minWidth: "140px" }}>
+                                  <p className="font-bold text-sm" style={{ color: "#7D0A0A" }}>{u.nama}</p>
+                                  <p className="text-xs" style={{ color: "#9A6060" }}>Gol. {u.gol}</p>
                                 </div>
 
-                                {/* Progress bar horizontal - DIKECILKAN KE h-1 DAN MAX WIDTH */}
-                                <div className="flex-1 flex justify-center">
+                                <div
+                                  className="flex-1 h-2 rounded-full overflow-hidden"
+                                  style={{ backgroundColor: "#E0C5BC", minWidth: "80px" }}
+                                >
                                   <div
-                                    className="h-1 w-full max-w-[120px] rounded-full overflow-hidden"
-                                    style={{ backgroundColor: "#E0C5BC" }}
-                                  >
-                                    <div
-                                      className="h-full rounded-full transition-all duration-500"
-                                      style={{ width: `${pct}%`, backgroundColor: col.dot }}
-                                    />
-                                  </div>
+                                    className="h-full rounded-full transition-all duration-500"
+                                    style={{ width: `${pct}%`, backgroundColor: col.dot }}
+                                  />
                                 </div>
 
-                                {/* Kantong */}
                                 <p
-                                  className="text-xs font-bold whitespace-nowrap"
-                                  style={{ color: "#7D0A0A", minWidth: "90px", textAlign: "right" }}
+                                  className="text-sm font-bold whitespace-nowrap"
+                                  style={{ color: "#7D0A0A", minWidth: "100px", textAlign: "right" }}
                                 >
                                   {u.ada}/{u.kap} kantong
                                 </p>
 
-                                {/* Badge */}
-                                <div className="min-w-[80px] flex justify-end">
-                                  <span
-                                    className="px-3 py-1 rounded-full text-[9px] font-black whitespace-nowrap uppercase tracking-tighter"
-                                    style={{ backgroundColor: col.bg, color: col.text, textAlign: "center" }}
-                                  >
-                                    {getStatusLabel(st)}
-                                  </span>
-                                </div>
+                                <span
+                                  className="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap"
+                                  style={{ backgroundColor: col.bg, color: col.text, minWidth: "70px", textAlign: "center" }}
+                                >
+                                  {getStatusLabel(st)}
+                                </span>
                               </div>
                             );
                           })}
