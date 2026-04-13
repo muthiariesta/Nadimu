@@ -153,7 +153,7 @@ export default function Permintaan() {
           </div>
 
           <button
-            onClick={handleKirim}
+            onClick={() => router.push("/Hasil")}
             className="w-full bg-[#7D0A0A] hover:bg-[#F88E8E] active:scale-95 transition-all duration-200 text-[#FCFAEE] font-extrabold tracking-[2px] rounded-2xl py-2 text-xl mt-1">
             KIRIM
           </button>

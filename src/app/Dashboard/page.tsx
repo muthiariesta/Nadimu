@@ -81,7 +81,7 @@ const navItems = [
   { label: "Beranda",     icon: Home,          href: "/Dashboard" },
   { label: "Layanan",     icon: Cross,         href: "/Permintaan" },
   { label: "Persebaran",  icon: Map,           href: "/Petastok" },
-  { label: "Komunitas",   icon: UserCircle,    href: "/komunitas" },
+  { label: "Komunitas",   icon: UserCircle,    href: "/Komunitas" },
   { label: "Berita",      icon: Newspaper,     href: "/Berita" },
   { label: "Kegiatan",    icon: Calendar,      href: "/Kegiatan" },
   { label: "Permintaan Aktif",  icon: ClipboardList, href: "/Permintaanaktif" },
@@ -181,7 +181,10 @@ export default function BerandaPage() {
           <h1 className="text-3xl font-extrabold text-[#7D0A0A] tracking-wide">
             SELAMAT DATANG DI NADIMU!
           </h1>
-          <div className="flex items-center gap-3 bg-[#FCFAEE] rounded-2xl px-4 py-2">
+          <div
+            className="flex items-center gap-3 bg-[#FCFAEE] rounded-2xl px-4 py-2 cursor-pointer hover:bg-[#F7D4CC] transition-colors"
+            onClick={() => router.push("/profil")}
+          >
             <UserCircle size={48} color="#7D0A0A" />
             <div className="flex flex-col">
               <span className="text-lg font-bold text-[#7D0A0A]">{userProfile.nama}</span>

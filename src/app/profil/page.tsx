@@ -155,7 +155,12 @@ export default function ProfilPage() {
           <div className="w-24 h-24 bg-[#7D0A0A] rounded-full flex items-center justify-center">
             <UserCircle size={72} color="#FCFAEE" strokeWidth={1.5}/>
           </div>
-          <span className="text-md font-semibold text-[#7D0A0A] cursor-pointer hover:underline">Edit Profil</span>
+          <span
+            onClick={() => router.push("/Isiprofil")}
+            className="text-md font-semibold text-[#7D0A0A] cursor-pointer hover:underline"
+          >
+  Edit Profil
+</span>
         </div>
 
         <div className="flex flex-col gap-1 flex-1">

@@ -533,7 +533,19 @@ function BloodMap() {
 // ─── FAQ ─────────────────────────────────────────────────────────────────────
 
 function FAQ() {
-  const [open, setOpen] = useState<number | null>(0);
+  const [openSet, setOpenSet] = useState<Set<number>>(new Set([0]));
+
+  function toggle(i: number) {
+    setOpenSet((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) {
+        next.delete(i);
+      } else {
+        next.add(i);
+      }
+      return next;
+    });
+  }
 
   return (
     <section
@@ -548,7 +560,7 @@ function FAQ() {
       </h2>
       <div className="max-w-3xl mx-auto flex flex-col gap-5">
         {faqs.map((faq, i) => {
-          const isOpen = open === i;
+          const isOpen = openSet.has(i);
           return (
             <div
               key={i}
@@ -557,7 +569,7 @@ function FAQ() {
             >
               <button
                 suppressHydrationWarning
-                onClick={() => setOpen(isOpen ? null : i)}
+                onClick={() => toggle(i)}
                 className="w-full flex items-center justify-between px-8 py-5 text-left font-bold text-[#7B1818]"
                 style={{ fontSize: "clamp(0.95rem, 1.2vw, 1.05rem)" }}
               >

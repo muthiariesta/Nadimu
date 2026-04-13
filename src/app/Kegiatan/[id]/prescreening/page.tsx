@@ -17,6 +17,7 @@ const CHECKLIST_ITEMS = [
   "Tidur Minimal 5–6 Jam",
 ];
 
+
 export default function PreScreeningPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
