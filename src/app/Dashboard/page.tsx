@@ -20,7 +20,6 @@ interface RiwayatDonorItem {
   tanggal: string;
   bulanTahun: string;
   lokasi1: string;
-  lokasi2: string;
 }
 
 interface StokDarahItem {
@@ -99,6 +98,7 @@ export default function BerandaPage() {
   const [riwayatDonor, setRiwayatDonor] = useState<RiwayatDonorItem | null>(null);
   const [stokDarah, setStokDarah] = useState<StokDarahItem[]>([]);
   const [permintaanAktif, setPermintaanAktif] = useState<PermintaanAktifItem[]>([]);
+  const [sertifikatUrl, setSertifikatUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (kegiatanList.length === 0) return;
@@ -133,20 +133,22 @@ export default function BerandaPage() {
       // Riwayat donor
       const { data: riwayat } = await supabase
         .from("riwayat_donor")
-        .select("id, tanggal_donor, poin_didapat, institusi:pmi_id(nama_institusi)")
+        .select("id, tanggal_donor, poin_didapat, sertifikat, institusi:pmi_id(nama_institusi), event_donor:event_id(nama_event)")
         .eq("pengguna_id", profile.id)
         .order("tanggal_donor", { ascending: false })
         .limit(1)
         .maybeSingle();
+
       if (riwayat) {
         const institusi = Array.isArray(riwayat.institusi) ? riwayat.institusi[0] : riwayat.institusi;
+        const event = Array.isArray(riwayat.event_donor) ? riwayat.event_donor[0] : riwayat.event_donor;
         setRiwayatDonor({
-          nama: institusi?.nama_institusi ?? "-",
+          nama: event?.nama_event ?? "-",           // ← nama event di atas
+          lokasi1: institusi?.nama_institusi ?? "-", // ← nama PMI di bawah
           tanggal: new Date(riwayat.tanggal_donor).getDate().toString(),
           bulanTahun: new Date(riwayat.tanggal_donor).toLocaleDateString("id-ID", { month: "short", year: "numeric" }),
-          lokasi1: institusi?.nama_institusi ?? "-",
-          lokasi2: "",
         });
+        setSertifikatUrl(riwayat.sertifikat ?? null);
       }
 
       // Stok darah
@@ -323,11 +325,13 @@ export default function BerandaPage() {
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-lg font-bold text-[#7D0A0A]">{riwayatDonor?.lokasi1 ?? "-"}</span>
-                  <span className="text-lg text-[#7D0A0A]/70">{riwayatDonor?.lokasi2 ?? ""}</span>
                 </div>
               </div>
-              <button className="bg-[#7D0A0A] text-[#FCFAEE] text-md font-semibold px-8 py-1.5 rounded-xl hover:bg-[#F88E8E] transition-colors mt-1 w-full">
-                Lihat Sertifikat
+              <button
+                onClick={() => sertifikatUrl && window.open(sertifikatUrl, "_blank")}
+                disabled={!sertifikatUrl}
+                className="bg-[#7D0A0A] text-[#FCFAEE] text-md font-semibold px-8 py-1.5 rounded-xl hover:bg-[#F88E8E] transition-colors mt-1 w-full disabled:opacity-40">
+                {sertifikatUrl ? "Lihat Sertifikat" : "Sertifikat Belum Tersedia"}
               </button>
             </div>
           </div>
