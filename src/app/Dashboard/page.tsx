@@ -250,7 +250,16 @@ export default function BerandaPage() {
             className="flex items-center gap-3 bg-[#FCFAEE] rounded-2xl px-4 py-2 cursor-pointer hover:bg-[#F7D4CC] transition-colors"
             onClick={() => router.push("/profil")}
           >
-            <UserCircle size={48} color="#7D0A0A" />
+           {profile?.foto_url ? (
+              <img 
+                src={profile.foto_url} 
+                alt="Profile" 
+                className="w-12 h-12 rounded-full object-cover border-2 border-[#7D0A0A]" 
+              />
+            ) : (
+              <UserCircle size={48} color="#7D0A0A" />
+            )}
+            
             <div className="flex flex-col">
               <span className="text-lg font-bold text-[#7D0A0A]">{profile?.nama_lengkap ?? "-"}</span>
               <span className="text-md text-[#7D0A0A]/70">{profile?.total_poin ?? 0} Poin</span>
@@ -262,7 +271,7 @@ export default function BerandaPage() {
 
           {/* Kegiatan Terdekat */}
 <div className="bg-[#FCFAEE] border border-[#7D0A0A] rounded-2xl p-5 gap-2 min-w-[350px]">
-  <h2 className="text-2xl font-extrabold text-[#7D0A0A] tracking-wider text-center">KEGIATAN TERDEKAT</h2>
+  <h2 className="text-2xl font-extrabold text-[#7D0A0A] tracking-wider text-center mb-2">KEGIATAN TERDEKAT</h2>
   
   <div className="flex flex-col gap-4 flex-1">
     {kegiatanList.slice(kegiatanIndex, kegiatanIndex + 2).map((k, i) => (
