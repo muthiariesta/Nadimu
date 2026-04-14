@@ -25,13 +25,28 @@ export default function DaftarPage() {
     setError("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error: signUpError } = await supabase.auth.signUp({ 
+      email, 
+      password 
+    });
 
-    setLoading(false);
-    if (error) {
-      setError(error.message);
+    if (signUpError) {
+      setError(signUpError.message);
+      setLoading(false);
       return;
     }
+
+    if (data.user) {
+      await supabase.from("profil").insert([
+        { 
+          id: data.user.id, 
+          nama_lengkap: email.split('@')[0], 
+          total_poin: 0
+        }
+      ]);
+    }
+
+    setLoading(false);
     router.push("/Login");
   };
 
