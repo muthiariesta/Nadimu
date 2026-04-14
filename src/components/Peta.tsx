@@ -12,35 +12,35 @@ interface RegionData {
 }
 
 const REGION_MAP: Record<string, { nama: string; cx: number; cy: number }> = {
-  "Sumatera Utara":    { nama: "Sumatera", cx: 98,  cy: 3   },
-  "Sumatera Barat":   { nama: "Sumatera", cx: 98,  cy: 3   },
-  "Sumatera Selatan": { nama: "Sumatera", cx: 98,  cy: 3   },
-  "Riau":             { nama: "Sumatera", cx: 98,  cy: 3   },
-  "Lampung":          { nama: "Sumatera", cx: 98,  cy: 3   },
-  "Aceh":             { nama: "Sumatera", cx: 98,  cy: 3   },
-  "DKI Jakarta":      { nama: "Jawa",     cx: 107, cy: -7  },
-  "Jawa Barat":       { nama: "Jawa",     cx: 107, cy: -7  },
-  "Jawa Tengah":      { nama: "Jawa",     cx: 107, cy: -7  },
-  "Jawa Timur":       { nama: "Jawa",     cx: 107, cy: -7  },
-  "DI Yogyakarta":    { nama: "Jawa",     cx: 107, cy: -7  },
-  "Banten":           { nama: "Jawa",     cx: 107, cy: -7  },
-  "Bali":             { nama: "Bali & NTB", cx: 115.5, cy: -8.5 },
+  "Sumatera Utara":      { nama: "Sumatera",   cx: 98,    cy: 3    },
+  "Sumatera Barat":      { nama: "Sumatera",   cx: 98,    cy: 3    },
+  "Sumatera Selatan":    { nama: "Sumatera",   cx: 98,    cy: 3    },
+  "Riau":                { nama: "Sumatera",   cx: 98,    cy: 3    },
+  "Lampung":             { nama: "Sumatera",   cx: 98,    cy: 3    },
+  "Aceh":                { nama: "Sumatera",   cx: 98,    cy: 3    },
+  "DKI Jakarta":         { nama: "Jawa",       cx: 107,   cy: -7   },
+  "Jawa Barat":          { nama: "Jawa",       cx: 107,   cy: -7   },
+  "Jawa Tengah":         { nama: "Jawa",       cx: 107,   cy: -7   },
+  "Jawa Timur":          { nama: "Jawa",       cx: 107,   cy: -7   },
+  "DI Yogyakarta":       { nama: "Jawa",       cx: 107,   cy: -7   },
+  "Banten":              { nama: "Jawa",       cx: 107,   cy: -7   },
+  "Bali":                { nama: "Bali & NTB", cx: 115.5, cy: -8.5 },
   "Nusa Tenggara Barat": { nama: "Bali & NTB", cx: 115.5, cy: -8.5 },
-  "Nusa Tenggara Timur": { nama: "NTT",   cx: 121, cy: -9.5 },
-  "Kalimantan Barat": { nama: "Kalimantan", cx: 113, cy: 0.5 },
-  "Kalimantan Tengah":{ nama: "Kalimantan", cx: 113, cy: 0.5 },
-  "Kalimantan Selatan":{ nama: "Kalimantan", cx: 113, cy: 0.5 },
-  "Kalimantan Timur": { nama: "Kalimantan", cx: 113, cy: 0.5 },
-  "Kalimantan Utara": { nama: "Kalimantan", cx: 113, cy: 0.5 },
-  "Sulawesi Utara":   { nama: "Sulawesi", cx: 122, cy: -2  },
-  "Sulawesi Tengah":  { nama: "Sulawesi", cx: 122, cy: -2  },
-  "Sulawesi Selatan": { nama: "Sulawesi", cx: 122, cy: -2  },
-  "Sulawesi Tenggara":{ nama: "Sulawesi", cx: 122, cy: -2  },
-  "Gorontalo":        { nama: "Sulawesi", cx: 122, cy: -2  },
-  "Maluku":           { nama: "Maluku",   cx: 128, cy: -3.5 },
-  "Maluku Utara":     { nama: "Maluku",   cx: 128, cy: -3.5 },
-  "Papua":            { nama: "Papua",    cx: 137, cy: -4.5 },
-  "Papua Barat":      { nama: "Papua",    cx: 137, cy: -4.5 },
+  "Nusa Tenggara Timur": { nama: "NTT",        cx: 121,   cy: -9.5 },
+  "Kalimantan Barat":    { nama: "Kalimantan", cx: 113,   cy: 0.5  },
+  "Kalimantan Tengah":   { nama: "Kalimantan", cx: 113,   cy: 0.5  },
+  "Kalimantan Selatan":  { nama: "Kalimantan", cx: 113,   cy: 0.5  },
+  "Kalimantan Timur":    { nama: "Kalimantan", cx: 113,   cy: 0.5  },
+  "Kalimantan Utara":    { nama: "Kalimantan", cx: 113,   cy: 0.5  },
+  "Sulawesi Utara":      { nama: "Sulawesi",   cx: 122,   cy: -2   },
+  "Sulawesi Tengah":     { nama: "Sulawesi",   cx: 122,   cy: -2   },
+  "Sulawesi Selatan":    { nama: "Sulawesi",   cx: 122,   cy: -2   },
+  "Sulawesi Tenggara":   { nama: "Sulawesi",   cx: 122,   cy: -2   },
+  "Gorontalo":           { nama: "Sulawesi",   cx: 122,   cy: -2   },
+  "Maluku":              { nama: "Maluku",     cx: 128,   cy: -3.5 },
+  "Maluku Utara":        { nama: "Maluku",     cx: 128,   cy: -3.5 },
+  "Papua":               { nama: "Papua",      cx: 137,   cy: -4.5 },
+  "Papua Barat":         { nama: "Papua",      cx: 137,   cy: -4.5 },
 };
 
 function getStatus(jumlah: number, kapasitas: number): "kritis" | "waspada" | "aman" {
@@ -66,16 +66,26 @@ export default function PetaD3() {
 
   useEffect(() => {
     const fetchStok = async () => {
-      const { data } = await supabase
-        .from("stok_darah")
-        .select("jumlah_kantong, kapasitas, institusi:pmi_id(provinsi)");
+      
+      const [{ data: stokData, error: stokError }, { data: institusiData }] = await Promise.all([
+        supabase.from("stok_darah").select("jumlah_kantong, kapasitas, pmi_id"),
+        supabase.from("institusi").select("id, provinsi"),
+      ]);
 
-      if (!data) return;
+console.log("stokData:", stokData);
+console.log("stokError:", stokError);
+      if (!stokData || !institusiData) return;
+
+      // Map id institusi → provinsi
+      const institusiMap: Record<string, string> = {};
+      institusiData.forEach((i: any) => {
+        institusiMap[i.id] = i.provinsi ?? "";
+      });
 
       const grouped: Record<string, { total: number; kapTotal: number; nama: string; cx: number; cy: number }> = {};
 
-      data.forEach((item: any) => {
-        const provinsi = item.institusi?.provinsi ?? "";
+      stokData.forEach((item: any) => {
+        const provinsi = institusiMap[item.pmi_id] ?? "";
         const mapped = REGION_MAP[provinsi];
         if (!mapped) return;
 
@@ -104,16 +114,11 @@ export default function PetaD3() {
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return;
 
-    let d3Module: typeof import("d3");
-    let topoModule: typeof import("topojson-client");
-
     const init = async () => {
       const [d3, topojson] = await Promise.all([
         import("d3"),
         import("topojson-client"),
       ]);
-      d3Module = d3;
-      topoModule = topojson;
 
       const container = containerRef.current!;
       const W = container.clientWidth;
@@ -202,7 +207,6 @@ export default function PetaD3() {
         className="w-full rounded-3xl overflow-hidden relative border-[1.5px] border-[#E0C5BC] shadow-[0_4px_24px_rgba(125,10,10,0.08)]"
         style={{ height: "clamp(220px, 42vw, 480px)" }}
       >
-
         <div className="absolute bottom-10 left-4 z-10 flex gap-3">
           {[["#BF3131", "Kritis"], ["#F2E076", "Waspada"], ["rgba(127,183,60,0.53)", "Aman"]].map(([c, l]) => (
             <div key={l} className="flex items-center gap-1.5 text-[10px] font-bold text-[#7D0A0A]">

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Home, Cross, Map, UserCircle, Newspaper, Calendar, ClipboardList, LogOut, MapPin, User } from "lucide-react";
+import { Home, Cross, Map, UserCircle, Newspaper, Calendar, ClipboardList, LogOut, MapPin } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface KegiatanItem {
   id: string;
@@ -43,12 +44,6 @@ interface UserProfile {
   kota: string;
 }
 
-const userProfile: UserProfile = {
-  nama: "Benedicta Sherin",
-  poin: 1000,
-  kota: "Bandung",
-};
-
 const kegiatanList: KegiatanItem[] = [
   { id: "k1", nama: "Aksi Donor Darah", penyelenggara: "HMIF ITB", tanggal: "25", bulanTahun: "April 2026", lokasi: "Aula Barat ITB" },
   { id: "k2", nama: "Donor Darah PMI",  penyelenggara: "PMI Kota", tanggal: "30", bulanTahun: "April 2026", lokasi: "Gedung PMI" },
@@ -64,13 +59,6 @@ const riwayatDonor: RiwayatDonorItem = {
   lokasi2: "PMI Bekasi",
 };
 
-const stokDarah: StokDarahItem[] = [
-  { golongan: "A",  kantong: 50,  maxKantong: 100 },
-  { golongan: "B",  kantong: 75,  maxKantong: 100 },
-  { golongan: "O",  kantong: 5,   maxKantong: 100 },
-  { golongan: "AB", kantong: 100, maxKantong: 100 },
-];
-
 const permintaanAktif: PermintaanAktifItem[] = [
   { id: "p1", golongan: "O+", nama: "Kim Jong Un",    lokasi: "RS Unpad",    tanggal: "14 Maret 2026" },
   { id: "p2", golongan: "O+", nama: "Illona Nasywa",  lokasi: "RS Borromeus",tanggal: "4 Maret 2026"  },
@@ -78,18 +66,17 @@ const permintaanAktif: PermintaanAktifItem[] = [
 ];
 
 const navItems = [
-  { label: "Beranda",     icon: Home,          href: "/Dashboard" },
-  { label: "Layanan",     icon: Cross,         href: "/Permintaan" },
-  { label: "Persebaran",  icon: Map,           href: "/Petastok" },
-  { label: "Komunitas",   icon: UserCircle,    href: "/Komunitas" },
-  { label: "Berita",      icon: Newspaper,     href: "/Berita" },
-  { label: "Kegiatan",    icon: Calendar,      href: "/Kegiatan" },
-  { label: "Permintaan Aktif",  icon: ClipboardList, href: "/Permintaanaktif" },
+  { label: "Beranda",          icon: Home,          href: "/Dashboard" },
+  { label: "Layanan",          icon: Cross,         href: "/Permintaan" },
+  { label: "Persebaran",       icon: Map,           href: "/Petastok" },
+  { label: "Komunitas",        icon: UserCircle,    href: "/Komunitas" },
+  { label: "Berita",           icon: Newspaper,     href: "/Berita" },
+  { label: "Kegiatan",         icon: Calendar,      href: "/Kegiatan" },
+  { label: "Permintaan Aktif", icon: ClipboardList, href: "/Permintaanaktif" },
 ];
 
 function StokDarahBar({ item }: { item: StokDarahItem }) {
   const pct = item.maxKantong > 0 ? (item.kantong / item.maxKantong) * 100 : 0;
-
   const barColor =
     pct <= 40 ? "bg-[#BE6764]" :
     pct <= 70 ? "bg-[#F2E076]" :
@@ -101,7 +88,8 @@ function StokDarahBar({ item }: { item: StokDarahItem }) {
       <div className="flex-1 h-4 bg-[#000000]/10 rounded-none overflow-hidden">
         <div
           className={`h-full ${barColor} rounded-none transition-all duration-300`}
-          style={{ width: `${pct}%` }}/>
+          style={{ width: `${pct}%` }}
+        />
       </div>
       <span className="text-sm font-semibold text-[#7D0A0A] w-25 text-right">{item.kantong} Kantong</span>
     </div>
@@ -127,7 +115,8 @@ function PermintaanRow({ item, onKonfirmasi }: { item: PermintaanAktifItem; onKo
       <span className="text-md text-[#7D0A0A] font-semibold whitespace-nowrap">{item.tanggal}</span>
       <button
         onClick={() => onKonfirmasi(item.id)}
-        className="bg-[#7D0A0A] text-[#FCFAEE] text-md font-semibold px-4 py-1.5 rounded-xl hover:bg-[#F88E8E] transition-colors whitespace-nowrap">
+        className="bg-[#7D0A0A] text-[#FCFAEE] text-md font-semibold px-4 py-1.5 rounded-xl hover:bg-[#F88E8E] transition-colors whitespace-nowrap"
+      >
         Konfirmasi
       </button>
     </div>
@@ -138,23 +127,92 @@ export default function BerandaPage() {
   const router = useRouter();
 
   const [kegiatanIndex, setKegiatanIndex] = useState(0);
+  const [userProfile, setUserProfile] = useState<UserProfile>({ nama: "", poin: 0, kota: "" });
+  const [stokDarah, setStokDarah] = useState<StokDarahItem[]>([]);
+  const [loadingStok, setLoadingStok] = useState(true);
+
+  // Auto-slide kegiatan
   useEffect(() => {
     const interval = setInterval(() => {
-        setKegiatanIndex((i) => (i === kegiatanList.length - 1 ? 0 : i + 1));}, 5000);
-        return () => clearInterval(interval);
-         }, []);
-         
-  const kegiatan = kegiatanList[kegiatanIndex];
+      setKegiatanIndex((i) => (i === kegiatanList.length - 1 ? 0 : i + 1));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch user profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("profil")
+        .select("nama_lengkap, poin, kota")
+        .eq("id", user.id)
+        .single();
+
+      if (data) {
+        setUserProfile({ nama: data.nama_lengkap ?? "", poin: data.poin ?? 0, kota: data.kota ?? "" });
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  // Fetch stok darah berdasarkan kota user
+  useEffect(() => {
+    if (!userProfile.kota) return;
+
+    const fetchStok = async () => {
+      setLoadingStok(true);
+
+      const { data } = await supabase
+        .from("stok_darah")
+        .select("golongan_darah, rhesus, jumlah_kantong, kapasitas, institusi:pmi_id(kota)")
+        .ilike("institusi.kota", `%${userProfile.kota}%`);
+
+      if (!data || data.length === 0) {
+        setLoadingStok(false);
+        return;
+      }
+
+      // Gabungkan per golongan darah
+      const grouped: Record<string, { kantong: number; kapasitas: number }> = {};
+      data.forEach((item: any) => {
+        const gol = `${item.golongan_darah}${item.rhesus}`;
+        if (!grouped[gol]) grouped[gol] = { kantong: 0, kapasitas: 0 };
+        grouped[gol].kantong += item.jumlah_kantong ?? 0;
+        grouped[gol].kapasitas += item.kapasitas ?? 100;
+      });
+
+      const result: StokDarahItem[] = Object.entries(grouped).map(([golongan, val]) => ({
+        golongan,
+        kantong: val.kantong,
+        maxKantong: val.kapasitas,
+      }));
+
+      setStokDarah(result);
+      setLoadingStok(false);
+    };
+
+    fetchStok();
+  }, [userProfile.kota]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/");
+  };
 
   const handleKonfirmasi = (id: string) => {
     alert(`Konfirmasi permintaan id: ${id}`);
   };
 
+  const kegiatan = kegiatanList[kegiatanIndex];
+
   return (
     <div className="min-h-screen font-[Plus_Jakarta_Sans] flex bg-[#FCFAEE]">
       <aside className="w-65 bg-[#F88E8E]/35 flex flex-col py-8 px-5 gap-6 shadow-md shrink-0 pl-3">
         <div className="flex items-center gap-2 mb-4 pl-8">
-          <img src="/asset/logo.png" alt="Donor Darah" className="w-8 h-full object-cover object-center block brightness-95"/>
+          <img src="/asset/logo.png" alt="Donor Darah" className="w-8 h-full object-cover object-center block brightness-95" />
           <span className="text-2xl font-extrabold text-[#7D0A0A]">Nadimu</span>
         </div>
 
@@ -163,14 +221,18 @@ export default function BerandaPage() {
             <button
               key={nav.label}
               onClick={() => router.push(nav.href)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-md font-semibold text-[#7D0A0A] hover:bg-[#F88E8E]/60 transition-colors text-left">
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-md font-semibold text-[#7D0A0A] hover:bg-[#F88E8E]/60 transition-colors text-left"
+            >
               <nav.icon size={32} />
               {nav.label}
             </button>
           ))}
         </nav>
 
-        <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-md font-semibold text-[#7D0A0A] hover:bg-[#F88E8E]/60 transition-colors pl-6">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-md font-semibold text-[#7D0A0A] hover:bg-[#F88E8E]/60 transition-colors pl-6"
+        >
           <LogOut size={32} />
           Keluar
         </button>
@@ -187,59 +249,74 @@ export default function BerandaPage() {
           >
             <UserCircle size={48} color="#7D0A0A" />
             <div className="flex flex-col">
-              <span className="text-lg font-bold text-[#7D0A0A]">{userProfile.nama}</span>
+              <span className="text-lg font-bold text-[#7D0A0A]">{userProfile.nama || "..."}</span>
               <span className="text-md text-[#7D0A0A]/70">{userProfile.poin} Poin</span>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-[2fr_5fr] gap-3 flex-1">
-            <div className="bg-[#FCFAEE] border border-[#7D0A0A] rounded-2xl p-5 flex flex-col gap-2">
-                <h2 className="text-2xl font-extrabold text-[#7D0A0A] tracking-wider text-center">KEGIATAN TERDEKAT</h2>
-                <div className="flex flex-col gap-4 flex-1">
-                    {kegiatanList.map((k, i) => (
-                        <div
-                        key={k.id}
-                        className={`bg-[#F7D4CC] rounded-xl px-4 py-2 flex flex-col gap-2 flex-1 transition-all duration-500 ${
-                            i === kegiatanIndex ? "ring-2 ring-[#7D0A0A]" : "opacity-50"}`}>
-                                <span className="text-lg font-bold text-[#7D0A0A] text-center">{k.nama}</span>
-                                <div className="flex items-center gap-3 w-full">
-                                    <div className="bg-[#7D0A0A] text-[#FCFAEE] rounded-2xl px-3 py-2 text-center w-[90px] shrink-0">
-                                        <div className="text-2xl font-extrabold leading-none">{k.tanggal}</div>
-                                        <div className="text-xs mt-1">{k.bulanTahun}</div>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-md font-bold text-[#7D0A0A]">{k.penyelenggara}</span>
-                                            <span className="text-md text-[#7D0A0A]/70">{k.lokasi}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                ))}
-                        </div>
-                        <div className="flex justify-center gap-1.5 mt-1">
-                            {kegiatanList.map((_, i) => (
-                            <button
-                            key={i}
-                            onClick={() => setKegiatanIndex(i)}
-                            className={`h-2 rounded-full transition-all duration-300 ${
-                            i === kegiatanIndex ? "bg-[#7D0A0A] w-4" : "bg-[#7D0A0A]/30 w-2"}`}/>
-                            ))}
-                        </div>
-        </div>
-
-          <div className="bg-[#F88E8E]/35 rounded-2xl p-5 flex flex-col gap-4">
-            <h2 className="text-2xl font-extrabold text-[#7D0A0A] tracking-wider text-center">STOK DARAH</h2>
-            <div className="flex items-center gap-3 mb-1">
-              <MapPin size={32} color="#7D0A0A" />
-              <span className="text-2xl font-bold text-[#7D0A0A]">{userProfile.kota.toUpperCase()}</span>
+          {/* Kegiatan Terdekat */}
+          <div className="bg-[#FCFAEE] border border-[#7D0A0A] rounded-2xl p-5 flex flex-col gap-2">
+            <h2 className="text-2xl font-extrabold text-[#7D0A0A] tracking-wider text-center">KEGIATAN TERDEKAT</h2>
+            <div className="flex flex-col gap-4 flex-1">
+              {kegiatanList.map((k, i) => (
+                <div
+                  key={k.id}
+                  className={`bg-[#F7D4CC] rounded-xl px-4 py-2 flex flex-col gap-2 flex-1 transition-all duration-500 ${
+                    i === kegiatanIndex ? "ring-2 ring-[#7D0A0A]" : "opacity-50"
+                  }`}
+                >
+                  <span className="text-lg font-bold text-[#7D0A0A] text-center">{k.nama}</span>
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="bg-[#7D0A0A] text-[#FCFAEE] rounded-2xl px-3 py-2 text-center w-[90px] shrink-0">
+                      <div className="text-2xl font-extrabold leading-none">{k.tanggal}</div>
+                      <div className="text-xs mt-1">{k.bulanTahun}</div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-md font-bold text-[#7D0A0A]">{k.penyelenggara}</span>
+                      <span className="text-md text-[#7D0A0A]/70">{k.lokasi}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex flex-col gap-6">
-              {stokDarah.map((item) => (
-                <StokDarahBar key={item.golongan} item={item} />
+            <div className="flex justify-center gap-1.5 mt-1">
+              {kegiatanList.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setKegiatanIndex(i)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    i === kegiatanIndex ? "bg-[#7D0A0A] w-4" : "bg-[#7D0A0A]/30 w-2"
+                  }`}
+                />
               ))}
             </div>
           </div>
 
+          {/* Stok Darah */}
+          <div className="bg-[#F88E8E]/35 rounded-2xl p-5 flex flex-col gap-4">
+            <h2 className="text-2xl font-extrabold text-[#7D0A0A] tracking-wider text-center">STOK DARAH</h2>
+            <div className="flex items-center gap-3 mb-1">
+              <MapPin size={32} color="#7D0A0A" />
+              <span className="text-2xl font-bold text-[#7D0A0A]">{userProfile.kota.toUpperCase() || "..."}</span>
+            </div>
+            {loadingStok ? (
+              <div className="flex justify-center py-4">
+                <div className="w-6 h-6 rounded-full border-2 border-[#7D0A0A] border-t-transparent animate-spin" />
+              </div>
+            ) : stokDarah.length === 0 ? (
+              <p className="text-sm text-[#7D0A0A]/60 text-center">Data stok tidak tersedia untuk kota ini.</p>
+            ) : (
+              <div className="flex flex-col gap-6">
+                {stokDarah.map((item) => (
+                  <StokDarahBar key={item.golongan} item={item} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Riwayat Donor */}
           <div className="bg-[#FCFAEE] border border-[#7D0A0A] rounded-2xl p-5 flex flex-col gap-1.5">
             <h2 className="text-xl font-extrabold text-[#7D0A0A] tracking-wider text-center">RIWAYAT DONOR DARAH</h2>
             <div className="bg-[#F88E8E]/35 flex flex-col items-center gap-1.5 rounded-2xl px-4 py-2">
@@ -260,9 +337,10 @@ export default function BerandaPage() {
             </div>
           </div>
 
+          {/* Permintaan Aktif */}
           <div className="bg-[#F88E8E]/35 rounded-2xl p-2 flex flex-col gap-1">
             <h2 className="text-2xl font-extrabold text-[#7D0A0A] tracking-wider text-center">PERMINTAAN AKTIF</h2>
-            <div className="flex flex-col gap-2.5 bg-[F88E8E]50">
+            <div className="flex flex-col gap-2.5">
               {permintaanAktif.map((item) => (
                 <PermintaanRow key={item.id} item={item} onKonfirmasi={handleKonfirmasi} />
               ))}
