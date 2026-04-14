@@ -12,7 +12,6 @@ export interface Profile {
   total_donor: number;
   foto_url: string | null;
   tanggal_lahir: string;
-  created_at: string;
 }
 
 export function useProfile() {
@@ -26,7 +25,7 @@ export function useProfile() {
 
       const { data } = await supabase
         .from("profil")
-        .select("id, nama_lengkap, golongan_darah, rhesus, provinsi, kota, total_poin, total_donor, foto_url, tanggal_lahir, created_at")
+        .select("id, nama_lengkap, golongan_darah, rhesus, provinsi, kota, total_poin, total_donor, foto_url, tanggal_lahir")
         .eq("id", session.user.id)
         .single();
 
