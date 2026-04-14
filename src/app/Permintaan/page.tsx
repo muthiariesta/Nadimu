@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronDown } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function Permintaan() {
   const router = useRouter();
@@ -13,30 +14,89 @@ export default function Permintaan() {
   const [namaRumahSakit, setNamaRumahSakit] = useState("");
   const [daerah, setDaerah] = useState("");
   const [catatanTambahan, setCatatanTambahan] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleKirim = () => {
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id);
+    });
+  }, []);
+
+  const handleKirim = async () => {
     if (!namaPasien || !golonganDarah || !rhesus || !jumlahKantong || !namaRumahSakit || !daerah) {
       alert("Lengkapi semua data!");
       return;
     }
-    alert("Permintaan berhasil dikirim!");
+    if (!userId) {
+      alert("Kamu belum login!");
+      return;
+    }
+
+    setLoading(true);
+
+    const { data: permintaan, error } = await supabase
+      .from("permintaan_darah")
+      .insert({
+        pencari_id: userId,
+        nama_pasien: namaPasien,
+        golongan_darah: golonganDarah,
+        rhesus,
+        jumlah_kantong: parseInt(jumlahKantong),
+        rs_pasien: namaRumahSakit,
+        kota: daerah,
+        catatan: catatanTambahan,
+        status: "aktif",
+      })
+      .select()
+      .single();
+
+    if (error || !permintaan) {
+      alert("Gagal menyimpan permintaan!");
+      setLoading(false);
+      return;
+    }
+
+    const { data: pendonor } = await supabase
+      .from("profil")
+      .select("id")
+      .eq("golongan_darah", golonganDarah)
+      .eq("rhesus", rhesus)
+      .eq("kota", daerah)
+      .eq("aktif_pendonor", true)
+      .neq("id", userId);
+    console.log("golonganDarah:", golonganDarah);
+    console.log("rhesus:", rhesus);
+    console.log("daerah:", daerah);
+    console.log("pendonor:", pendonor);
+
+    await fetch("/api/kirim-notif-permintaan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        permintaan_id: permintaan.id,
+        golongan: `${golonganDarah}${rhesus}`,
+        kota: daerah,
+        nama_pasien: namaPasien,
+        rs: namaRumahSakit,
+        pendonor_ids: pendonor?.map((p) => p.id) ?? [],
+      }),
+    });
+
+    setLoading(false);
+    router.push("/Hasil");
   };
 
   return (
     <div className="min-h-screen w-full font-[Plus_Jakarta_Sans] bg-[linear-gradient(225deg,#F88E8E_0%,#e8c0c0_20%,#f3e4e4_50%,#FCFAEE_100%)] px-10 py-8">
       <div className="relative flex items-center justify-center mb-8">
-        <button
-          onClick={() => router.back()}
-          className="absolute left-0 p-1 hover:opacity-70 transition-opacity">
+        <button onClick={() => router.back()} className="absolute left-0 p-1 hover:opacity-70 transition-opacity">
           <ArrowLeft size={32} color="#7D0A0A" />
         </button>
-        <h1 className="text-3xl font-extrabold tracking-[2px] text-[#7D0A0A]">
-          PERMINTAAN
-        </h1>
+        <h1 className="text-3xl font-extrabold tracking-[2px] text-[#7D0A0A]">PERMINTAAN</h1>
       </div>
 
       <div className="flex gap-[80px] max-w-4xl mx-auto">
-
         <div className="w-72 flex-1 bg-[#F88E8E]/50 rounded-2xl p-6">
           <h2 className="text-[#7D0A0A] font-bold text-base text-center mb-4 leading-snug">
             Panduan Permintaan<br />Kantong Darah
@@ -44,12 +104,8 @@ export default function Permintaan() {
           <ol className="text-[#7D0A0A] text-sm space-y-3 list-decimal list-outside pl-4">
             <li>Isi formulir sesuai dengan data pasien yang dibutuhkan.</li>
             <li>Setelah semua data terisi dengan benar, klik Kirim.</li>
-            <li>
-              Sistem akan memproses data dan mencocokkan kebutuhan darah dengan stok darah di fasilitas kesehatan terdekat atau dengan pendonor yang memiliki golongan darah yang sesuai.
-            </li>
-            <li>
-              Jika ditemukan stok darah atau pendonor yang sesuai, Anda dapat langsung menghubungi kontak yang tersedia untuk mendapatkan kantong darah.
-            </li>
+            <li>Sistem akan memproses data dan mencocokkan kebutuhan darah dengan stok darah di fasilitas kesehatan terdekat atau dengan pendonor yang memiliki golongan darah yang sesuai.</li>
+            <li>Jika ditemukan stok darah atau pendonor yang sesuai, Anda dapat langsung menghubungi kontak yang tersedia untuk mendapatkan kantong darah.</li>
           </ol>
         </div>
 
@@ -60,7 +116,8 @@ export default function Permintaan() {
               type="text"
               value={namaPasien}
               onChange={(e) => setNamaPasien(e.target.value)}
-              className="bg-[#F88E8E]/50 border-none rounded-2xl px-4 py-3 text-sm text-[#7D0A0A] outline-none w-full placeholder-[#c0a0a0]"/>
+              className="bg-[#F88E8E]/50 border-none rounded-2xl px-4 py-3 text-sm text-[#7D0A0A] outline-none w-full placeholder-[#c0a0a0]"
+            />
           </div>
 
           <div className="flex gap-8 items-start">
@@ -75,7 +132,8 @@ export default function Permintaan() {
                       value={gol}
                       checked={golonganDarah === gol}
                       onChange={() => setGolonganDarah(gol)}
-                      className="accent-[#7D0A0A] w-4 h-4 cursor-pointer"/>
+                      className="accent-[#7D0A0A] w-4 h-4 cursor-pointer"
+                    />
                     {gol}
                   </label>
                 ))}
@@ -93,7 +151,8 @@ export default function Permintaan() {
                       value={r}
                       checked={rhesus === r}
                       onChange={() => setRhesus(r)}
-                      className="accent-[#7D0A0A] w-4 h-4 cursor-pointer"/>
+                      className="accent-[#7D0A0A] w-4 h-4 cursor-pointer"
+                    />
                     {r}
                   </label>
                 ))}
@@ -108,7 +167,8 @@ export default function Permintaan() {
               min={1}
               value={jumlahKantong}
               onChange={(e) => setJumlahKantong(e.target.value)}
-              className="bg-[#F88E8E]/50 border-none rounded-2xl px-4 py-3 text-sm text-[#7D0A0A] outline-none w-full placeholder-[#c0a0a0]"/>
+              className="bg-[#F88E8E]/50 border-none rounded-2xl px-4 py-3 text-sm text-[#7D0A0A] outline-none w-full placeholder-[#c0a0a0]"
+            />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -117,7 +177,8 @@ export default function Permintaan() {
               type="text"
               value={namaRumahSakit}
               onChange={(e) => setNamaRumahSakit(e.target.value)}
-              className="bg-[#F88E8E]/50 border-none rounded-2xl px-4 py-3 text-sm text-[#7D0A0A] outline-none w-full placeholder-[#c0a0a0]"/>
+              className="bg-[#F88E8E]/50 border-none rounded-2xl px-4 py-3 text-sm text-[#7D0A0A] outline-none w-full placeholder-[#c0a0a0]"
+            />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -126,9 +187,11 @@ export default function Permintaan() {
               <select
                 value={daerah}
                 onChange={(e) => setDaerah(e.target.value)}
-                className="bg-[#F88E8E]/50 border-none rounded-2xl px-4 py-3 text-sm text-[#7D0A0A] outline-none w-full appearance-none cursor-pointer">
+                className="bg-[#F88E8E]/50 border-none rounded-2xl px-4 py-3 text-sm text-[#7D0A0A] outline-none w-full appearance-none cursor-pointer"
+              >
                 <option value=""></option>
                 <option>Bandung</option>
+                <option>Bekasi</option>
                 <option>Jakarta</option>
                 <option>Surabaya</option>
                 <option>Medan</option>
@@ -136,10 +199,7 @@ export default function Permintaan() {
                 <option>Semarang</option>
                 <option>Makassar</option>
               </select>
-              <ChevronDown
-                size={25}
-                color="#7D0A0A"
-                className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"/>
+              <ChevronDown size={25} color="#7D0A0A" className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
@@ -149,15 +209,17 @@ export default function Permintaan() {
               type="text"
               value={catatanTambahan}
               onChange={(e) => setCatatanTambahan(e.target.value)}
-              className="bg-[#F88E8E]/50 border-none rounded-2xl px-4 py-3 text-sm text-[#7D0A0A] outline-none w-full placeholder-[#c0a0a0]"/>
+              className="bg-[#F88E8E]/50 border-none rounded-2xl px-4 py-3 text-sm text-[#7D0A0A] outline-none w-full placeholder-[#c0a0a0]"
+            />
           </div>
 
           <button
-            onClick={() => router.push("/Hasil")}
-            className="w-full bg-[#7D0A0A] hover:bg-[#F88E8E] active:scale-95 transition-all duration-200 text-[#FCFAEE] font-extrabold tracking-[2px] rounded-2xl py-2 text-xl mt-1">
-            KIRIM
+            onClick={handleKirim}
+            disabled={loading}
+            className="w-full bg-[#7D0A0A] hover:bg-[#F88E8E] active:scale-95 transition-all duration-200 text-[#FCFAEE] font-extrabold tracking-[2px] rounded-2xl py-2 text-xl mt-1 disabled:opacity-60"
+          >
+            {loading ? "MEMPROSES..." : "KIRIM"}
           </button>
-
         </div>
       </div>
     </div>

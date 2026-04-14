@@ -121,6 +121,7 @@ console.log("stokError:", stokError);
       ]);
 
       const container = containerRef.current!;
+      if (!container) return;
       const W = container.clientWidth;
       const H = container.clientHeight;
 
