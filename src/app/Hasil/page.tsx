@@ -142,6 +142,15 @@ export default function Hasil() {
     alert(`Berhasil menghubungkan! ${isPendonor ? "Pendonor" : "PMI"} akan segera dihubungi.`);
   };
 
+  const handleSelesai = async (responId: string) => {
+    const { error } = await supabase
+      .from("respon_permintaan")
+      .update({ status: "selesai" })
+      .eq("id", responId);
+
+    if (!error) alert("Donor selesai! Poin pendonor bertambah.");
+  };
+
   return (
     <div className="min-h-screen w-full font-[Plus_Jakarta_Sans] bg-[#FCFAEE] px-10 py-8">
       <div className="relative flex items-center justify-center mb-10">

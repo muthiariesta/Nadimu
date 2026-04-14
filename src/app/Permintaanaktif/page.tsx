@@ -240,6 +240,9 @@ export default function PermintaanAktif() {
       permintaan_id: item.permintaan_id,
       pendonor_id: userId,
       status: "menunggu",
+      sudah_dihubungkan: false,
+      sudah_dikonfirmasi: true,        // ← pendonor sudah konfirmasi bersedia
+      dikonfirmasi_pada: new Date().toISOString(),
     });
 
     await supabase.rpc("increment_kantong", { permintaan_id: item.permintaan_id });
