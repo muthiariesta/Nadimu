@@ -129,24 +129,38 @@ export default function KomunitasChatPage() {
   }, [komunitas_id]);
 
   const handleKirim = async () => {
-    if (!inputPesan.trim() || !userId) return;
-    const { data, error } = await supabase
-      .from("pesan_komunitas")
-      .insert({
-        komunitas_id,
-        pengirim_id: userId,
-        isi: inputPesan,
-      })
-      .select();
-      console.log("hasil insert:", data, error);
-      
-    if (error) {
-      console.error("Gagal kirim:", error);
-      return;
-    }
+  if (!inputPesan.trim() || !userId) return;
 
-    setInputPesan("");
-  };
+  const pesanText = inputPesan;
+  setInputPesan("");
+
+  const { data, error } = await supabase
+    .from("pesan_komunitas")
+    .insert({
+      komunitas_id,
+      pengirim_id: userId,
+      isi: pesanText,
+    })
+    .select("id, isi, dikirim_pada, pengirim_id")
+    .single();
+
+  if (error) {
+    console.error("Gagal kirim:", error);
+    return;
+  }
+
+  // langsung update UI
+  setPesan((prev) => [
+    ...prev,
+    {
+      id: data.id,
+      isi: data.isi,
+      dikirim_pada: data.dikirim_pada,
+      pengirim_id: data.pengirim_id,
+      nama: "Saya",
+    },
+  ]);
+};
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
