@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Search, Users, MessageSquare } from "lucide-react";
+import { ArrowLeft, Search, User, Users, MessageSquare } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface Komunitas {
   id: string;
@@ -13,28 +14,86 @@ interface Komunitas {
   sudahGabung?: boolean;
 }
 
-const MOCK_KOMUNITAS: Komunitas[] = [
-  { id: "1", nama: "Rhesus Negatif Indonesia", deskripsi: "Komunitas pemilik rhesus negatif di seluruh Indonesia.", jumlah_pesan: 1200, jumlah_anggota: 54, sudahGabung: false },
-  { id: "2", nama: "Pendonor Aktif Jakarta", deskripsi: "Koordinasi pendonor aktif di DKI Jakarta.", jumlah_pesan: 37, jumlah_anggota: 12, sudahGabung: false },
-  { id: "3", nama: "Goldar AB Jawa Tengah", deskripsi: "Komunitas pendonor golongan AB di Jawa Tengah.", jumlah_pesan: 159, jumlah_anggota: 20, sudahGabung: false },
-  { id: "4", nama: "Goldar B+ Makassar", deskripsi: "Pendonor golongan B+ di Makassar dan sekitarnya.", jumlah_pesan: 15, jumlah_anggota: 8, sudahGabung: false },
-  { id: "5", nama: "Rhesus Positif Jawa Barat", deskripsi: "Jaringan pendonor Rh+ aktif di Jawa Barat.", jumlah_pesan: 1200, jumlah_anggota: 54, sudahGabung: false },
-  { id: "6", nama: "Pendonor Gen Z Jember", deskripsi: "Komunitas muda donor darah di Jember.", jumlah_pesan: 37, jumlah_anggota: 12, sudahGabung: false },
-  { id: "7", nama: "Surabaya Blood Heroes", deskripsi: "Komunitas donor darah Surabaya dan sekitarnya.", jumlah_pesan: 59, jumlah_anggota: 20, sudahGabung: false },
-  { id: "8", nama: "Pendonor Gen Z Tambun", deskripsi: "Generasi muda Tambun yang aktif mendonor.", jumlah_pesan: 67, jumlah_anggota: 6, sudahGabung: false },
-];
-
 export default function KomunitasPage() {
   const router = useRouter();
-  const [komunitas, setKomunitas] = useState<Komunitas[]>(MOCK_KOMUNITAS);
+  const [komunitas, setKomunitas] = useState<Komunitas[]>([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleGabung = (k: Komunitas) => {
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id ?? null);
+      await fetchKomunitas(user?.id ?? null);
+    };
+    init();
+  }, []);
+
+  const fetchKomunitas = async (uid: string | null) => {
+    setLoading(true);
+
+    const { data: komunitasData, error } = await supabase
+    .from("komunitas")
+    .select("*")
+    .order("nama");
+    
+    console.log("DATA:", komunitasData);
+    console.log("ERROR:", error);
+
+    if (error) {
+    console.error("Error", error);
+    setLoading(false);
+    return;
+    }
+
+    let joinedIds = new Set<string>();
+    if (uid) {
+      const { data: anggotaData } = await supabase
+        .from("anggota_komunitas")
+        .select("komunitas_id")
+        .eq("pengguna_id", uid);
+
+      joinedIds = new Set(anggotaData?.map((a) => a.komunitas_id) ?? []);
+    }
+    const withStatus = (komunitasData ?? []).map((k) => ({
+      ...k,
+      sudahGabung: joinedIds.has(k.id),
+    }));
+
+    setKomunitas(withStatus);
+    setLoading(false);
+  };
+
+
+  const handleGabung = async (k: Komunitas) => {
+    if (!userId) {
+      router.push("/Login");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("anggota_komunitas")
+      .insert({ komunitas_id: k.id, pengguna_id: userId });
+
+    if (error) {
+      console.error("Gagal gabung komunitas:", error);
+      return;
+    }
+
+    await supabase
+      .from("komunitas")
+      .update({ jumlah_anggota: k.jumlah_anggota + 1 })
+      .eq("id", k.id);
+
     setKomunitas((prev) =>
       prev.map((item) =>
-        item.id === k.id ? { ...item, sudahGabung: true } : item
+        item.id === k.id
+          ? { ...item, sudahGabung: true, jumlah_anggota: item.jumlah_anggota + 1 }
+          : item
       )
     );
+
     router.push(`/Komunitas/${k.id}`);
   };
 
@@ -52,17 +111,13 @@ export default function KomunitasPage() {
         background: "linear-gradient(135deg, #FDF0EE 0%, #FAE8E8 100%)",
       }}
     >
-      <div className="relative flex items-center justify-center px-24 pt-10 pb-6">
+      <div className="relative flex items-center justify-center px-10 py-8">
         <button
           onClick={() => router.back()}
-          className="absolute left-24 p-2 rounded-full hover:bg-[#7D0A0A]/10 transition-colors"
-        >
-          <ArrowLeft size={32} className="text-[#7D0A0A]" />
+          className="absolute left-8 p-1 hover:opacity-70 transition-opacity bg-transparent border-none cursor-pointer">
+          <ArrowLeft size={32} color="#7D0A0A" />
         </button>
-        <h1
-          className="text-2xl font-extrabold text-[#7D0A0A]"
-          style={{ letterSpacing: "0.15em" }}
-        >
+        <h1 className="text-3xl font-extrabold tracking-[1.5px] text-[#7D0A0A]">
           KOMUNITAS
         </h1>
       </div>
@@ -85,18 +140,23 @@ export default function KomunitasPage() {
       </div>
 
       <div className="px-24 pb-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 border-4 border-[#7D0A0A]/30 border-t-[#7D0A0A] rounded-full animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filtered.map((k) => (
             <KomunitasCard
               key={k.id}
               k={k}
               onGabung={() => handleGabung(k)}
-              onOpen={() => router.push(`/Komunitas/${k.id}`)}
-            />
+              onOpen={() => router.push(`/Komunitas/${k.id}`)}/>
           ))}
         </div>
-
-        {filtered.length === 0 && (
+        )}
+          
+        {!loading && filtered.length === 0 && (
           <div className="text-center py-20">
             <p className="text-[#7D0A0A]/50 text-sm font-semibold">
               Tidak ada komunitas ditemukan
@@ -120,26 +180,23 @@ function KomunitasCard({
   return (
     <div
       className="flex items-center gap-4 px-6 py-5 rounded-2xl transition-all duration-200 hover:shadow-md"
-      style={{ backgroundColor: "rgba(248, 142, 142, 0.45)" }}
-    >
+      style={{ backgroundColor: "rgba(248, 142, 142, 0.45)" }}>
       <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#7D0A0A] flex items-center justify-center">
-        <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-        </svg>
+        <User size={30} color="#FCFAEE" strokeWidth={1.5} />
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-[#7D0A0A] text-sm truncate">{k.nama}</p>
+        <p className="font-bold text-[#7D0A0A] text-md truncate">{k.nama}</p>
         <div className="flex items-center gap-3 mt-1">
           <div className="flex items-center gap-1 text-[#7D0A0A]/70">
-            <Users size={12} />
-            <span className="text-[11px] font-semibold">
+            <Users size={16} />
+            <span className="text-[14px] font-semibold">
               {k.jumlah_anggota.toLocaleString("id-ID")}
             </span>
           </div>
           <div className="flex items-center gap-1 text-[#7D0A0A]/70">
-            <MessageSquare size={12} />
-            <span className="text-[11px] font-semibold">
+            <MessageSquare size={16} />
+            <span className="text-[14px] font-semibold">
               {k.jumlah_pesan.toLocaleString("id-ID")}
             </span>
           </div>
@@ -149,15 +206,13 @@ function KomunitasCard({
       {k.sudahGabung ? (
         <button
           onClick={onOpen}
-          className="flex-shrink-0 px-6 py-2.5 rounded-full text-xs font-bold bg-[#7D0A0A] text-white transition-all hover:bg-[#5c0808] active:scale-95"
-        >
+          className="flex-shrink-0 px-6 py-2.5 rounded-full text-sm font-bold bg-[#7D0A0A] text-white transition-all hover:bg-[#5c0808] active:scale-95">
           BUKA
         </button>
       ) : (
         <button
           onClick={onGabung}
-          className="flex-shrink-0 px-6 py-2.5 rounded-full text-xs font-bold bg-white text-[#7D0A0A] border border-[#7D0A0A]/20 transition-all hover:bg-[#7D0A0A] hover:text-white active:scale-95"
-        >
+          className="flex-shrink-0 px-6 py-2.5 rounded-full text-sm font-bold bg-white text-[#7D0A0A] border border-[#7D0A0A]/20 transition-all hover:bg-[#7D0A0A] hover:text-white active:scale-95">
           GABUNG
         </button>
       )}
