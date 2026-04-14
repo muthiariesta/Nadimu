@@ -249,6 +249,28 @@ export default function ProfilPage() {
     );
   }
 
+  const handleDownloadShare = async () => {
+  const url =
+    "https://gznqpobpnixktcpykoez.supabase.co/storage/v1/object/public/share/Share.png";
+
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+
+    const link = document.createElement("a");
+    link.href = window.URL.createObjectURL(blob);
+    link.download = "Janlup-share.png";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(link.href);
+  } catch (err) {
+    console.error("Gagal download:", err);
+    alert("Gagal download gambar.");
+  }
+};
+
   return (
     <div className="min-h-screen font-[Plus_Jakarta_Sans] bg-[radial-gradient(ellipse_at_center,#e8c0c0_0%,#f3e4e4_40%,#FCFAEE_100%)] px-6 py-8 flex flex-col gap-6">
       <div className="relative flex items-center justify-center mb-2">
@@ -288,7 +310,12 @@ export default function ProfilPage() {
           </span>
           <div className="flex items-center justify-between bg-[#EA7B7B]/50 rounded-lg px-4 py-2 mt-1.5 w-[800px]">
             <span className="text-sm text-[#7D0A0A]">Bagikan pencapaianmu dan ajak orang lain untuk jadi penyelamat</span>
-            <Share2 size={18} color="#7D0A0A" className="shrink-0 ml-2 cursor-pointer" />
+            <Share2
+              size={18}
+              color="#7D0A0A"
+              className="shrink-0 ml-2 cursor-pointer"
+              onClick={handleDownloadShare}
+            />
           </div>
         </div>
 
