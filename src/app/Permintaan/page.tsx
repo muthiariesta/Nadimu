@@ -24,6 +24,7 @@ export default function Permintaan() {
   }, []);
 
   const handleKirim = async () => {
+    // Validasi dasar
     if (!namaPasien || !golonganDarah || !rhesus || !jumlahKantong || !namaRumahSakit || !daerah) {
       alert("Lengkapi semua data!");
       return;
@@ -35,13 +36,14 @@ export default function Permintaan() {
 
     setLoading(true);
 
-    const { data: permintaan, error } = await supabase
+    // FIX LOGIC: Menangkap error insert secara spesifik
+    const { data: permintaan, error: insertError } = await supabase
       .from("permintaan_darah")
       .insert({
         pencari_id: userId,
         nama_pasien: namaPasien,
         golongan_darah: golonganDarah,
-        rhesus,
+        rhesus: rhesus,
         jumlah_kantong: parseInt(jumlahKantong),
         rs_pasien: namaRumahSakit,
         kota: daerah,
@@ -51,13 +53,22 @@ export default function Permintaan() {
       .select()
       .single();
 
-    if (error || !permintaan) {
-      alert("Gagal menyimpan permintaan!");
+    if (insertError) {
+      console.error("Detail Error Insert:", insertError);
+      alert(`Gagal menyimpan permintaan: ${insertError.message}`);
       setLoading(false);
       return;
     }
 
-    const { data: pendonor } = await supabase
+    // Pastikan data permintaan ada sebelum lanjut
+    if (!permintaan) {
+      alert("Gagal mendapatkan data respon dari server.");
+      setLoading(false);
+      return;
+    }
+
+    // Ambil data pendonor potensial
+    const { data: pendonor, error: pendonorError } = await supabase
       .from("profil")
       .select("id")
       .eq("golongan_darah", golonganDarah)
@@ -65,23 +76,28 @@ export default function Permintaan() {
       .eq("kota", daerah)
       .eq("aktif_pendonor", true)
       .neq("id", userId);
-    console.log("golonganDarah:", golonganDarah);
-    console.log("rhesus:", rhesus);
-    console.log("daerah:", daerah);
-    console.log("pendonor:", pendonor);
 
-    await fetch("/api/kirim-notif-permintaan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        permintaan_id: permintaan.id,
-        golongan: `${golonganDarah}${rhesus}`,
-        kota: daerah,
-        nama_pasien: namaPasien,
-        rs: namaRumahSakit,
-        pendonor_ids: pendonor?.map((p) => p.id) ?? [],
-      }),
-    });
+    if (pendonorError) {
+      console.error("Error Fetch Pendonor:", pendonorError);
+    }
+
+    // Kirim notifikasi via API Route
+    try {
+      await fetch("/api/kirim-notif-permintaan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          permintaan_id: permintaan.id,
+          golongan: `${golonganDarah}${rhesus}`,
+          kota: daerah,
+          nama_pasien: namaPasien,
+          rs: namaRumahSakit,
+          pendonor_ids: pendonor?.map((p) => p.id) ?? [],
+        }),
+      });
+    } catch (fetchError) {
+      console.error("Error API Notif:", fetchError);
+    }
 
     setLoading(false);
     router.push("/Hasil");

@@ -128,7 +128,23 @@ export default function PermintaanAktif() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    let channel: any;
+    const channel = supabase
+      .channel("permintaan-realtime")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "permintaan_darah" },
+        (payload) => {
+          const updated = payload.new as any;
+          setPermintaanSaya((prev) => {
+            if (!prev || prev.id !== updated.id) return prev;
+            return { ...prev, terpenuhi: updated.kantong_terpenuhi };
+          });
+          setPermintaanList((prev) =>
+            prev.map((p) => (p.id === updated.id ? { ...p, terpenuhi: updated.kantong_terpenuhi } : p))
+          );
+        }
+      )
+      .subscribe();
 
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -148,17 +164,21 @@ export default function PermintaanAktif() {
         .neq("pencari_id", user.id);
 
       if (semua) {
-        setPermintaanList(semua.filter((p) => p.id && p.pencari_id).map((p) => ({
-          id: p.id as string,
-          nama: p.nama_pasien,
-          golongan: p.golongan_darah,
-          rhesus: p.rhesus,
-          terpenuhi: p.kantong_terpenuhi ?? 0,
-          total: p.jumlah_kantong,
-          lokasi: p.kota,
-          tanggal: new Date(p.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-          pencari_id: p.pencari_id as string,
-        })));
+        setPermintaanList(
+          semua
+            .filter((p) => p.id && p.pencari_id)
+            .map((p) => ({
+              id: p.id as string,
+              nama: p.nama_pasien,
+              golongan: p.golongan_darah,
+              rhesus: p.rhesus,
+              terpenuhi: p.kantong_terpenuhi ?? 0,
+              total: p.jumlah_kantong,
+              lokasi: p.kota,
+              tanggal: new Date(p.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+              pencari_id: p.pencari_id as string,
+            }))
+        );
       }
 
       const { data: milik } = await supabase
@@ -192,44 +212,28 @@ export default function PermintaanAktif() {
           .neq("pencari_id", user.id);
 
         if (notif) {
-          setNotifikasiList(notif.filter((n) => n.id && n.pencari_id).map((n) => ({
-            id: n.id as string,
-            permintaan_id: n.id as string,
-            golongan: n.golongan_darah,
-            rhesus: n.rhesus,
-            pesan: `${n.nama_pasien} membutuhkan kantong ${n.golongan_darah}${n.rhesus} di ${n.rs_pasien}`,
-            tanggal: new Date(n.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-            lokasi: n.kota,
-            pencari_id: n.pencari_id as string,
-          })));
+          setNotifikasiList(
+            notif
+              .filter((n) => n.id && n.pencari_id)
+              .map((n) => ({
+                id: n.id as string,
+                permintaan_id: n.id as string,
+                golongan: n.golongan_darah,
+                rhesus: n.rhesus,
+                pesan: `${n.nama_pasien} membutuhkan kantong ${n.golongan_darah}${n.rhesus} di ${n.rs_pasien}`,
+                tanggal: new Date(n.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+                lokasi: n.kota,
+                pencari_id: n.pencari_id as string,
+              }))
+          );
         }
       }
-
-      channel = supabase
-        .channel("permintaan-realtime")
-        .on(
-          "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "permintaan_darah" },
-          (payload) => {
-            const updated = payload.new as any;
-            setPermintaanSaya((prev) => {
-              if (!prev || prev.id !== updated.id) return prev;
-              return { ...prev, terpenuhi: updated.kantong_terpenuhi };
-            });
-            setPermintaanList((prev) =>
-              prev.map((p) => p.id === updated.id ? { ...p, terpenuhi: updated.kantong_terpenuhi } : p)
-            );
-          }
-        )
-        .subscribe();
     };
 
     init();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -241,7 +245,7 @@ export default function PermintaanAktif() {
       pendonor_id: userId,
       status: "menunggu",
       sudah_dihubungkan: false,
-      sudah_dikonfirmasi: true,        // ← pendonor sudah konfirmasi bersedia
+      sudah_dikonfirmasi: true,
       dikonfirmasi_pada: new Date().toISOString(),
     });
 
