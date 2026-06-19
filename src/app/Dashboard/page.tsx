@@ -116,6 +116,7 @@ export default function BerandaPage() {
         .from("event_donor")
         .select("id, nama_event, tanggal, lokasi, institusi:penyelenggara_id(nama_institusi)")
         .eq("status", "aktif")
+        .order("tanggal", { ascending: true })
         .limit(3);
       if (kegiatan) {
         setKegiatanList(kegiatan.map((k: any) => ({
@@ -170,21 +171,46 @@ export default function BerandaPage() {
         })));
       }
 
-      // Permintaan aktif
-      const { data: permintaan } = await supabase
-        .from("permintaan_darah")
-        .select("id, nama_pasien, golongan_darah, rhesus, rs_pasien, created_at")
-        .eq("status", "aktif")
-        .limit(3);
-      if (permintaan) {
-        setPermintaanAktif(permintaan.map((p: any) => ({
-          id: p.id,
-          golongan: `${p.golongan_darah}${p.rhesus === "positif" ? "+" : "-"}`,
-          nama: p.nama_pasien,
-          lokasi: p.rs_pasien,
-          tanggal: new Date(p.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-        })));
-      }
+      // Permintaan aktif (yang sudah dihubungkan ke user ini)
+const { data: permintaan, error: permintaanError } = await supabase
+  .from("respon_permintaan")
+  .select(`
+    id,
+    sudah_dihubungkan,
+    permintaan_darah:permintaan_id (
+      id,
+      nama_pasien,
+      golongan_darah,
+      rhesus,
+      rs_pasien,
+      created_at,
+      status
+    )
+  `)
+  .eq("pendonor_id", profile.id)
+  .eq("sudah_dihubungkan", true)
+  .order("created_at", { ascending: false })
+  .limit(3);
+
+if (permintaanError) console.log(permintaanError);
+
+if (permintaan) {
+  setPermintaanAktif(
+    permintaan
+      .filter((r: any) => r.permintaan_darah && r.permintaan_darah.status === "aktif")
+      .map((r: any) => ({
+        id: r.permintaan_darah.id,
+        golongan: `${r.permintaan_darah.golongan_darah}${r.permintaan_darah.rhesus === "positif" ? "+" : "-"}`,
+        nama: r.permintaan_darah.nama_pasien ?? "-",
+        lokasi: r.permintaan_darah.rs_pasien ?? "-",
+        tanggal: new Date(r.permintaan_darah.created_at).toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+      }))
+  );
+}
     };
     fetchAll();
   }, [profile]);
