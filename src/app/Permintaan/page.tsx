@@ -83,7 +83,7 @@ export default function Permintaan() {
 
     // Kirim notifikasi via API Route
     try {
-      await fetch("/api/kirim-notif-permintaan", {
+      const res = await fetch("/api/kirim-notif-permintaan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -95,8 +95,13 @@ export default function Permintaan() {
           pendonor_ids: pendonor?.map((p) => p.id) ?? [],
         }),
       });
+      if (!res.ok) {
+        console.error("Error API Notif:", res.status, await res.text());
+        alert("Permintaan tersimpan, tapi notifikasi email ke pendonor gagal dikirim.");
+      }
     } catch (fetchError) {
       console.error("Error API Notif:", fetchError);
+      alert("Permintaan tersimpan, tapi notifikasi email ke pendonor gagal dikirim.");
     }
 
     setLoading(false);

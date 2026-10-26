@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Email tidak ditemukan" }, { status: 400 });
   }
 
-  await resend.emails.send({
+  const { error: emailError } = await resend.emails.send({
     from: "Nadimu <onboarding@resend.dev>",
     // Sandbox Resend hanya bisa kirim ke email pemilik akun, jadi saat demo pakai EMAIL_DEMO_TO
     to: process.env.EMAIL_DEMO_TO || pencari.email,
@@ -36,6 +36,11 @@ export async function POST(req: Request) {
       <p>Terima kasih,<br/>Tim Nadimu</p>
     `,
   });
+
+  if (emailError) {
+    console.error("Email error:", emailError);
+    return NextResponse.json({ error: emailError.message }, { status: 502 });
+  }
 
   return NextResponse.json({ ok: true });
 }

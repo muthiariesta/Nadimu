@@ -251,7 +251,7 @@ export default function PermintaanAktif() {
 
     await supabase.rpc("increment_kantong", { permintaan_id: item.permintaan_id });
 
-    await fetch("/api/kirim-email-pencari", {
+    const res = await fetch("/api/kirim-email-pencari", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -260,9 +260,15 @@ export default function PermintaanAktif() {
         golongan: `${item.golongan}${item.rhesus}`,
         kota: item.lokasi,
       }),
-    });
+    }).catch(() => null);
 
     setNotifikasiList((prev) => prev.filter((n) => n.id !== item.id));
+
+    if (!res?.ok) {
+      console.error("Error API Email Pencari:", res?.status, await res?.text());
+      alert("Konfirmasi tersimpan, tapi email ke pencari gagal dikirim.");
+      return;
+    }
     alert("Konfirmasi berhasil! Pencari akan dihubungi via email.");
   };
 

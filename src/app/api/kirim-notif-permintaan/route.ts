@@ -22,6 +22,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, info: "no pendonor" });
   }
 
+  let gagal = 0;
+
   for (const id of pendonor_ids) {
     const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(id);
     
@@ -44,6 +46,11 @@ export async function POST(req: Request) {
     });
 
     console.log("Email error:", emailError);
+    if (emailError) gagal++;
+  }
+
+  if (gagal > 0) {
+    return NextResponse.json({ error: `${gagal} email gagal dikirim` }, { status: 502 });
   }
 
   return NextResponse.json({ ok: true });
