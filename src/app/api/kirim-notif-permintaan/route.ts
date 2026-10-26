@@ -2,13 +2,17 @@ import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(req: Request) {
+  if (!process.env.RESEND_API_KEY || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: "RESEND_API_KEY / SUPABASE_SERVICE_ROLE_KEY belum di-set" }, { status: 500 });
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
   const body = await req.json();
   const { golongan, kota, nama_pasien, rs, pendonor_ids } = body;
 
