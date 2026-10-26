@@ -25,7 +25,8 @@ export async function POST(req: Request) {
 
   await resend.emails.send({
     from: "Nadimu <onboarding@resend.dev>",
-    to: "18224045@std.stei.itb.ac.id",
+    // Sandbox Resend hanya bisa kirim ke email pemilik akun, jadi saat demo pakai EMAIL_DEMO_TO
+    to: process.env.EMAIL_DEMO_TO || pencari.email,
     subject: `Pendonor ${golongan} Ditemukan di ${kota}!`,
     html: `
       <p>Halo,</p>
